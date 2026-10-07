@@ -1,0 +1,21 @@
+{
+  "patternsTestText01": "prohibido",
+  "patternsTestText02": "prohibido",
+  "patternsTestText03": "acción",
+  "patternsTestText04": "Esa ACCION no se permite",
+  "patternsTestText05": "interacción",
+  "patternsTestText06": "mensaje",
+  "patternsTestText07": "mensaje oculto",
+  "patternsTestText08": "MODERATION:mensaje oculto",
+  "platformIntegrationTestText01": "Canal de pruebas",
+  "platformIntegrationTestText02": "Prueba real de integración",
+  "platformIntegrationTestText03": "Directo de pruebas",
+  "platformIntegrationTestText04": "prohibido",
+  "platformIntegrationTestText05": "Hola comunidad",
+  "platformIntegrationTestText06": "prohibido",
+  "platformIntegrationTestText07": "Prueba de silencio",
+  "platformIntegrationTestText08": "No debe pasar",
+  "platformIntegrationTestText09": "El directo terminó",
+  "platformIntegrationTestText10": "Prueba de clip",
+  "platformIntegrationTestText11": "Edición real"
+}

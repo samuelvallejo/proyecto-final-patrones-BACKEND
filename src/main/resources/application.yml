@@ -1,0 +1,43 @@
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never
+spring:
+  datasource:
+    url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/streamguard}
+    username: ${PGUSER:streamguard}
+    password: ${PGPASSWORD:streamguard}
+    hikari:
+      maximum-pool-size: 10
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 31MB
+  threads:
+    virtual:
+      enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+app:
+  origins: ${FRONTEND_ORIGIN:http://localhost:5173}
+  media-dir: ${MEDIA_DIR:./.local/media}
+  media-work-dir: ${MEDIA_WORK_DIR:}
+  media-storage: ${MEDIA_STORAGE:filesystem}
+  gemini-key: ${GEMINI_API_KEY:}
+  gemini-model: ${GEMINI_MODEL:gemini-2.5-flash}
+  ai-provider: ${AI_PROVIDER:local-rules}
+  ollama-url: ${OLLAMA_GATEWAY_URL:}
+  ollama-token: ${OLLAMA_GATEWAY_TOKEN:}
+  ollama-model: ${OLLAMA_MODEL:qwen3:4b-instruct}
+  max-viewers: ${MAX_VIEWERS:6}
+  turn-url: ${TURN_URL:}
+  turn-user: ${TURN_USERNAME:}
+  turn-password: ${TURN_PASSWORD:}

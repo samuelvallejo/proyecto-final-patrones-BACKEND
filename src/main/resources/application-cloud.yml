@@ -1,0 +1,20 @@
+# Supabase stores the application in a schema that is not exposed to its Data API.
+spring:
+  datasource:
+    hikari:
+      schema: streamguard
+      maximum-pool-size: 5
+      minimum-idle: 1
+  flyway:
+    default-schema: streamguard
+    schemas: streamguard
+    create-schemas: false
+    # The MCP bootstrap installs the exact V1 and V2 snapshot before first launch.
+    baseline-on-migrate: true
+    baseline-version: 2
+    baseline-description: Supabase bootstrap V1 and V2
+server:
+  forward-headers-strategy: native
+app:
+  # Free hosts lose local files when they sleep. PostgreSQL retains the clip bytes.
+  media-storage: ${MEDIA_STORAGE:database}

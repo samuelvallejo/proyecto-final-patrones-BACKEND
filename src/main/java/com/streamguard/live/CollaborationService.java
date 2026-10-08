@@ -23,6 +23,8 @@ public class CollaborationService {
   @Transactional
   public Map<String, Object> create(UUID stream, UUID user) {
     var live = ownedLiveStream(stream, user);
+    removeEndedMemberships();
+    requireUnjoinedStream(stream);
     String code = inviteCode();
     UUID room = db.insert(
         "INSERT INTO stream_collaborations(primary_stream_id,invite_hash,max_participants)"
@@ -43,7 +45,8 @@ public class CollaborationService {
       throw new ApiError(400, Messages.text("collaborationInvalidCode"));
     var room = db.optional(
         "SELECT id,primary_stream_id,max_participants FROM stream_collaborations"
-            + " WHERE invite_hash=? AND status='ACTIVE' FOR UPDATE",
+            + " WHERE invite_hash=? AND status='ACTIVE'"
+            + " AND primary_stream_id IN (SELECT id FROM streams WHERE status='LIVE') FOR UPDATE",
         TokenHasher.hash(code.strip()));
     if (room.isEmpty()) throw new ApiError(404, Messages.text("collaborationInviteMissing"));
     UUID roomId = Db.id(room.get().get("id"));
@@ -53,6 +56,8 @@ public class CollaborationService {
         "SELECT count(*) FROM collaboration_members WHERE room_id=? AND stream_id=? AND left_at IS NULL",
         roomId, streamId);
     if (alreadyJoined == 0) {
+      removeEndedMemberships();
+      requireUnjoinedStream(streamId);
       long participants = db.count(
           "SELECT count(*) FROM collaboration_members m JOIN streams s ON s.id=m.stream_id"
               + " WHERE m.room_id=? AND m.left_at IS NULL AND s.status='LIVE'",
@@ -73,10 +78,24 @@ public class CollaborationService {
   public Map<String, Object> forStream(UUID stream) {
     var room = db.optional(
         "SELECT c.id FROM stream_collaborations c JOIN collaboration_members m ON m.room_id=c.id"
-            + " WHERE m.stream_id=? AND m.left_at IS NULL AND c.status='ACTIVE' LIMIT 1",
+            + " WHERE m.stream_id=? AND m.left_at IS NULL AND c.status='ACTIVE'"
+            + " AND c.primary_stream_id IN (SELECT id FROM streams WHERE status='LIVE') LIMIT 1",
         stream);
     if (room.isEmpty()) return Map.of("active", false, "participants", List.of());
     return snapshot(Db.id(room.get().get("id")));
+  }
+
+  private void requireUnjoinedStream(UUID stream) {
+    if (db.count("SELECT count(*) FROM collaboration_members WHERE stream_id=? AND left_at IS NULL", stream) > 0)
+      throw new ApiError(409, Messages.text("collaborationAlreadyJoined"));
+  }
+
+  private void removeEndedMemberships() {
+    db.exec("UPDATE stream_collaborations SET status='ENDED',ended_at=now() WHERE status='ACTIVE'"
+        + " AND primary_stream_id IN (SELECT id FROM streams WHERE status<>'LIVE')");
+    db.exec("UPDATE collaboration_members SET left_at=now() WHERE left_at IS NULL AND"
+        + " (stream_id IN (SELECT id FROM streams WHERE status<>'LIVE') OR room_id IN"
+        + " (SELECT id FROM stream_collaborations WHERE status='ENDED'))");
   }
 
   @Transactional

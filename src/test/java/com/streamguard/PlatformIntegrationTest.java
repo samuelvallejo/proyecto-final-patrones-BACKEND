@@ -132,6 +132,27 @@ class PlatformIntegrationTest {
   }
 
   @Test
+  void collaborationRequiresAnOwnedLiveStreamAndLimitsTheGroupToFour() {
+    User host = user(); channel(host); String hostStream = stream(host);
+    User outsider = user(); channel(outsider);
+    assertEquals(409, call(HttpMethod.POST, "/streams/" + hostStream + "/collaborations", Map.of(), outsider.token()).getStatusCode().value());
+    var created = call(HttpMethod.POST, "/streams/" + hostStream + "/collaborations", Map.of(), host.token());
+    String code = created.getBody().get("inviteCode").toString();
+    assertEquals(409, call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), outsider.token()).getStatusCode().value());
+    assertEquals(409, call(HttpMethod.POST, "/streams/" + hostStream + "/collaborations", Map.of(), host.token()).getStatusCode().value());
+    for (int index = 0; index < 3; index++) {
+      User guest = user(); channel(guest); stream(guest);
+      assertEquals(200, call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), guest.token()).getStatusCode().value());
+    }
+    String outsiderStream = stream(outsider);
+    assertEquals(409, call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), outsider.token()).getStatusCode().value());
+    call(HttpMethod.POST, "/streams/" + hostStream + "/end", Map.of(), host.token());
+    assertEquals(404, call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), outsider.token()).getStatusCode().value());
+    assertEquals(false, call(HttpMethod.GET, "/streams/" + hostStream + "/collaboration", null, null).getBody().get("active"));
+    assertEquals(200, call(HttpMethod.POST, "/streams/" + outsiderStream + "/collaborations", Map.of(), outsider.token()).getStatusCode().value());
+  }
+
+  @Test
   void authenticationRequiresConsentAndRejectsWrongPassword() {
     assertEquals(
         400,

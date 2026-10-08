@@ -99,5 +99,6 @@
   "collaborationFull": "La colaboración ya alcanzó su límite de participantes.",
   "collaborationEnded": "La colaboración ya finalizó.",
   "collaborationNotMember": "No perteneces a esta colaboración.",
-  "collaborationRequiresLive": "Debes tener una transmisión activa para colaborar."
+  "collaborationRequiresLive": "Debes tener una transmisión activa para colaborar.",
+  "collaborationAlreadyJoined": "Tu directo ya pertenece a una colaboración. Sal de esa sala antes de crear otra o unirte a una diferente."
 }

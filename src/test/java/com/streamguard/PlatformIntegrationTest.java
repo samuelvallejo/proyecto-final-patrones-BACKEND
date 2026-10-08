@@ -46,7 +46,7 @@ class PlatformIntegrationTest {
                 "username",
                 n,
                 "email",
-                n + "@example.com",
+                n + "@gmail.com",
                 "password",
                 "TestPassword123!",
                 "aiConsent",
@@ -124,7 +124,7 @@ class PlatformIntegrationTest {
         call(
                 HttpMethod.POST,
                 "/auth/login",
-                Map.of("email", u.username() + "@example.com", "password", "wrong-password"),
+                Map.of("email", u.username() + "@gmail.com", "password", "wrong-password"),
                 null)
             .getStatusCode()
             .value());

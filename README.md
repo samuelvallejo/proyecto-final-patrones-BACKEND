@@ -21,3 +21,9 @@ El `Dockerfile` compila y ejecuta el backend e incluye FFmpeg para procesar clip
 El servicio gratuito `streamguard-backend` está conectado a la rama `codex/streamguard` del repositorio principal `Proyecto-final-patrones-de-software`. Actualmente los despliegues son manuales: después de trasladar la corrección a esa rama y subir el commit, selecciona **Manual Deploy → Deploy latest commit** en Render y espera **Deploy succeeded | Live**. Comprueba que el enlace **Source** corresponde al commit esperado. Subir cambios a este repositorio separado no actualiza por sí solo ese servicio.
 
 Una respuesta `UP` en `/actuator/health` confirma que el proceso está sano, pero no demuestra que ejecute la versión nueva. Para verificar el chat, envía un mensaje en una transmisión de prueba y comprueba su estado `VISIBLE`, su persistencia y la recepción por WebSocket. Las caídas del proveedor de IA deben guardar la respuesta de las reglas locales con el estado `LOCAL`, admitido por PostgreSQL.
+
+## Captura de cámara y pantalla
+
+Los permisos de cámara y micrófono se solicitan juntos en el frontend. Al compartir pantalla desde un navegador de escritorio compatible, el cliente integra la cámara en una esquina del video y envía una sola pista de video junto al audio por WebRTC o por la pasarela WSS existente. Desactivar la cámara oculta esa superposición sin interrumpir la pantalla ni el micrófono.
+
+Chrome en Android y Safari en iOS no admiten `getDisplayMedia`; el frontend informa esa limitación y ofrece transmitir con cámara y micrófono. Compartir juegos u otras aplicaciones de Android requiere una aplicación nativa con acceso a MediaProjection; el backend por sí solo no puede habilitar esa capacidad en el navegador. El acceso físico a los dispositivos debe comprobarse también en el teléfono real, además de las pruebas automatizadas con fuentes sintéticas.

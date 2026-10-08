@@ -108,7 +108,9 @@ public class AiService {
       log.warn("Moderation provider {} failed: {}", provider, e.getMessage());
       Verdict result =
           new Verdict(local.category(), local.confidence(), local.reason(), "LOCAL_RULES");
-      response(id, result, start, "FALLBACK");
+      // The database constraint only accepts PENDING, SUCCEEDED, FAILED, or LOCAL.
+      // This response is produced by the local rules after the provider fails.
+      response(id, result, start, "LOCAL");
       return new Analysis(id, result);
     } finally {
       if (acquired) slots.release();

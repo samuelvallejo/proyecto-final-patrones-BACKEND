@@ -93,5 +93,11 @@
   "fieldCategoryId": "Categoría",
   "fieldGeneric": "Campo",
   "liveHubUnknownEvent": "Evento desconocido",
-  "mediaServiceLoadFailed": "No se pudo recuperar el video almacenado. Vuelve a intentar."
+  "mediaServiceLoadFailed": "No se pudo recuperar el video almacenado. Vuelve a intentar.",
+  "collaborationInvalidCode": "El código de colaboración no es válido.",
+  "collaborationInviteMissing": "La invitación no existe o ya finalizó.",
+  "collaborationFull": "La colaboración ya alcanzó su límite de participantes.",
+  "collaborationEnded": "La colaboración ya finalizó.",
+  "collaborationNotMember": "No perteneces a esta colaboración.",
+  "collaborationRequiresLive": "Debes tener una transmisión activa para colaborar."
 }

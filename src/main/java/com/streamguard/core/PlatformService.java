@@ -90,6 +90,16 @@ public class PlatformService {
     owner(Db.id(row.get("channel_id")), user);
     db.exec(
         "UPDATE streams SET status='ENDED',ended_at=now() WHERE id=? AND status='LIVE'", stream);
+    db.exec(
+        "UPDATE stream_collaborations SET status='ENDED',ended_at=now() WHERE"
+            + " primary_stream_id=? AND status='ACTIVE'",
+        stream);
+    db.exec(
+        "UPDATE collaboration_members SET left_at=now() WHERE left_at IS NULL AND"
+            + " (stream_id=? OR room_id IN (SELECT id FROM stream_collaborations WHERE"
+            + " primary_stream_id=?))",
+        stream,
+        stream);
     hub.broadcast(
         stream, Map.of("type", "ended", "message", Messages.text("clipServiceHighlightText01")));
   }

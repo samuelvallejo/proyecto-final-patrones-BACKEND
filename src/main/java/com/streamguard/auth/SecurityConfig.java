@@ -43,6 +43,7 @@ public class SecurityConfig {
                         "/api/categories",
                         "/api/explore",
                         "/api/streams/*",
+                        "/api/streams/*/collaboration",
                         "/api/streams/*/messages",
                         "/api/clips/public",
                         "/api/media/*")

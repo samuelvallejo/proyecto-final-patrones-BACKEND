@@ -28,6 +28,7 @@ management:
       show-details: never
 app:
   origins: ${FRONTEND_ORIGIN:http://localhost:5173}
+  jwt-secret: ${JWT_SECRET:}
   media-dir: ${MEDIA_DIR:./.local/media}
   media-work-dir: ${MEDIA_WORK_DIR:}
   media-storage: ${MEDIA_STORAGE:filesystem}

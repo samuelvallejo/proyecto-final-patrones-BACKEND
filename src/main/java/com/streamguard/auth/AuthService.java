@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class AuthService {
+  private static final int MAX_TOKEN_LENGTH = 512;
+
   private final UserRepository users;
   private final SessionRepository sessions;
   private final PasswordHasher passwords;
@@ -33,8 +35,11 @@ public class AuthService {
   }
 
   public UUID resolve(String token) {
-    if (token == null || token.length() > 200) return null;
-    return sessions.findActiveUser(TokenHasher.hash(token)).orElse(null);
+    if (token == null || token.length() > MAX_TOKEN_LENGTH) return null;
+    // First the signature and the expiry of the JWT, then the session row (so logout still works).
+    var signed = tokens.userOf(token);
+    if (signed.isEmpty()) return null;
+    return sessions.findActiveUser(TokenHasher.hash(token)).filter(signed.get()::equals).orElse(null);
   }
 
   public static UUID current() {
@@ -72,7 +77,7 @@ public class AuthService {
 
   /** Create a session for the user and return the token (shown once) with the profile. */
   private Map<String, Object> openSession(UUID user) {
-    String token = tokens.generate();
+    String token = tokens.generate(user);
     sessions.create(user, TokenHasher.hash(token));
     return Map.of("token", token, "user", users.profile(user));
   }

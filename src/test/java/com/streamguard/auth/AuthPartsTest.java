@@ -2,7 +2,11 @@ package com.streamguard.auth;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.HashSet;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /** Tests the small classes of the login module without a database. */
@@ -20,16 +24,64 @@ class AuthPartsTest {
     assertNotEquals(TokenHasher.hash("one"), TokenHasher.hash("two"));
   }
 
+  private static final String SECRET = "a-test-secret-with-more-than-32-characters";
+
   @Test
-  void generatedTokensAreUrlSafeAndDifferent() {
-    var generator = new TokenGenerator();
-    var seen = new HashSet<String>();
-    for (int i = 0; i < 50; i++) {
-      String token = generator.generate();
-      assertEquals(43, token.length());
-      assertTrue(token.matches("[A-Za-z0-9_-]+"));
-      assertTrue(seen.add(token));
-    }
+  void tokenIsAJwtWithThreePartsAndCarriesTheUser() {
+    var generator = new TokenGenerator(SECRET);
+    var user = UUID.randomUUID();
+    String token = generator.generate(user);
+    assertEquals(3, token.split("\\.").length);
+    assertTrue(token.matches("[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"));
+    assertEquals(Optional.of(user), generator.userOf(token));
+  }
+
+  @Test
+  void twoTokensForTheSameUserAreDifferent() {
+    var generator = new TokenGenerator(SECRET);
+    var user = UUID.randomUUID();
+    assertNotEquals(generator.generate(user), generator.generate(user));
+  }
+
+  @Test
+  void tokenStopsBeingValidWhenItExpires() {
+    var generator = new TokenGenerator(SECRET);
+    var user = UUID.randomUUID();
+    Instant now = Instant.now();
+    String token = generator.generate(user, now);
+    assertTrue(generator.userOf(token, now.plus(TokenGenerator.LIFETIME).minusSeconds(1)).isPresent());
+    assertTrue(generator.userOf(token, now.plus(TokenGenerator.LIFETIME)).isEmpty());
+  }
+
+  @Test
+  void aChangedOrForeignTokenIsRejected() {
+    var generator = new TokenGenerator(SECRET);
+    var user = UUID.randomUUID();
+    String token = generator.generate(user);
+    String[] parts = token.split("\\.");
+    var other = Base64.getUrlEncoder().withoutPadding().encodeToString(
+        ("{\"sub\":\"" + UUID.randomUUID() + "\",\"exp\":9999999999}").getBytes(StandardCharsets.UTF_8));
+    assertTrue(generator.userOf(parts[0] + "." + other + "." + parts[2]).isEmpty());
+    assertTrue(new TokenGenerator(SECRET + "-another").userOf(token).isEmpty());
+    assertTrue(generator.userOf(parts[0] + "." + parts[1]).isEmpty());
+    assertTrue(generator.userOf(parts[0] + "." + parts[1] + ".").isEmpty());
+    assertTrue(generator.userOf("not-a-token").isEmpty());
+    assertTrue(generator.userOf("").isEmpty());
+  }
+
+  @Test
+  void aTokenWithoutSignatureAlgorithmIsRejected() {
+    var generator = new TokenGenerator(SECRET);
+    var enc = Base64.getUrlEncoder().withoutPadding();
+    String header = enc.encodeToString("{\"alg\":\"none\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
+    String payload = enc.encodeToString(
+        ("{\"sub\":\"" + UUID.randomUUID() + "\",\"exp\":9999999999}").getBytes(StandardCharsets.UTF_8));
+    assertTrue(generator.userOf(header + "." + payload + ".").isEmpty());
+  }
+
+  @Test
+  void aShortSecretIsRefused() {
+    assertThrows(IllegalArgumentException.class, () -> new TokenGenerator("too-short"));
   }
 
   @Test

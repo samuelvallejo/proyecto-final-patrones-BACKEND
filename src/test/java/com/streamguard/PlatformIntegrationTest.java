@@ -181,10 +181,10 @@ class PlatformIntegrationTest {
                 null)
             .getStatusCode()
             .value());
-    assertEquals(200, call(HttpMethod.GET, "/auth/me", null, u.token()).getStatusCode().value());
+    assertEquals(200, call(HttpMethod.GET, "/users/me", null, u.token()).getStatusCode().value());
     assertEquals(
         200, call(HttpMethod.POST, "/auth/logout", Map.of(), u.token()).getStatusCode().value());
-    assertEquals(401, call(HttpMethod.GET, "/auth/me", null, u.token()).getStatusCode().value());
+    assertEquals(401, call(HttpMethod.GET, "/users/me", null, u.token()).getStatusCode().value());
   }
 
   @Test

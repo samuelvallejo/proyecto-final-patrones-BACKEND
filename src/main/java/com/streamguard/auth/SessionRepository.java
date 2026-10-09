@@ -14,11 +14,11 @@ public class SessionRepository {
     this.db = db;
   }
 
-  /** Save a session that expires in seven days. */
+  /** Save a session that expires in two hours. */
   public void create(UUID user, String tokenHash) {
     db.exec(
-        "INSERT INTO auth_sessions(user_id,token_hash,expires_at) VALUES (?,?,now()+interval '7"
-            + " days')",
+        "INSERT INTO auth_sessions(user_id,token_hash,expires_at) VALUES (?,?,now()+interval '2"
+            + " hours')",
         user,
         tokenHash);
   }

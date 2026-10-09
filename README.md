@@ -4,7 +4,7 @@ API REST y WebSocket de StreamGuard, desarrollada en Java 21 con Spring Boot y P
 
 ## Ejecutar localmente
 
-Requiere Java 21 y Maven. Copia `.env.example` a `.env` y configura la conexión PostgreSQL y las variables que necesites. El perfil `cloud` usa `JDBC_DATABASE_URL`, `PGUSER` y `PGPASSWORD`.
+Requiere Java 21 y Maven. Copia `.env.example` a `.env` y configura la conexión PostgreSQL y las variables que necesites. El perfil `cloud` usa `JDBC_DATABASE_URL`, `PGUSER` y `PGPASSWORD`. La sesión es un JWT (HS256) firmado con `JWT_SECRET` (mínimo 32 caracteres, por ejemplo `openssl rand -hex 32`); si falta, se usa uno aleatorio y cada reinicio cierra las sesiones. Dura 2 horas.
 
 ```powershell
 mvn spring-boot:run

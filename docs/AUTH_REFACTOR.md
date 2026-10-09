@@ -27,7 +27,8 @@ classDiagram
         +matches(password, hash) boolean
     }
     class TokenGenerator {
-        +generate() String
+        +generate(user) String
+        +userOf(token) Optional~UUID~
     }
     class TokenHasher {
         +hash(token)$ String
@@ -60,10 +61,27 @@ classDiagram
 |---|---|
 | `AuthService` | Reglas del caso de uso: registrar, iniciar sesión, resolver un token y cerrar sesión. No contiene SQL ni criptografía. |
 | `PasswordHasher` | Regla de los 72 bytes de BCrypt, hash de la contraseña y comparación. |
-| `TokenGenerator` | Crea tokens aleatorios de 32 bytes con `SecureRandom`. |
+| `TokenGenerator` | Crea y verifica el JWT de la sesión (HS256, firmado con `JWT_SECRET`). |
 | `TokenHasher` | Calcula el SHA-256 del token. En la base de datos solo se guarda este hash. |
 | `UserRepository` | SQL de usuarios: crear la cuenta con sus filas iniciales, buscar por correo y leer el perfil. |
 | `SessionRepository` | SQL de sesiones: crear, buscar una sesión vigente y borrar. |
+
+## El token de sesión (JWT)
+
+El token tiene tres partes separadas por puntos: `cabecera.datos.firma`.
+
+| Parte | Contenido |
+|---|---|
+| Cabecera | `{"alg":"HS256","typ":"JWT"}` |
+| Datos | `sub` (usuario), `iat` (creado), `exp` (vence a las 2 horas), `jti` (id único) |
+| Firma | HMAC-SHA-256 de las dos partes anteriores, con el secreto `JWT_SECRET` |
+
+Al resolver un token, `AuthService` hace dos comprobaciones, en este orden:
+
+1. `TokenGenerator.userOf` verifica la firma y que no haya vencido. Un token alterado, de otro secreto, sin firma (`alg: none`) o vencido se rechaza.
+2. `SessionRepository.findActiveUser` busca la sesión por el hash del token y comprueba que el usuario siga activo. Así cerrar sesión sigue funcionando al instante, porque borra la fila.
+
+`JWT_SECRET` debe tener al menos 32 caracteres. Si no se define, se usa uno aleatorio durante esa ejecución y cada reinicio cierra las sesiones.
 
 ## Por qué es mejor
 

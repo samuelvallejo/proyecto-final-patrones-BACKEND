@@ -36,11 +36,6 @@ public class AuthController {
     return auth.login(r.email(), r.password());
   }
 
-  @GetMapping("/me")
-  public Map<String, Object> me() {
-    return auth.profile(AuthService.current());
-  }
-
   @PostMapping("/logout")
   public Map<String, Boolean> logout(
       @RequestHeader(value = "Authorization", required = false) String token) {

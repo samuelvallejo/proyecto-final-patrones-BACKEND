@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TokenGenerator {
   /** How long a token is valid. The session row in the database must use the same time. */
-  public static final Duration LIFETIME = Duration.ofHours(2);
+  public static final Duration LIFETIME = Duration.ofDays(7);
 
   private static final System.Logger LOG = System.getLogger(TokenGenerator.class.getName());
   private static final ObjectMapper JSON = new ObjectMapper();

@@ -12,7 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.cors.*;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -20,12 +20,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class SecurityConfig {
   @Bean
   SecurityFilterChain chain(
-      HttpSecurity http, AuthService auth, @Value("${app.origins}") String origins)
+      HttpSecurity http, AuthService auth, FieldCrypto crypto, @Value("${app.origins}") String origins)
       throws Exception {
     CorsConfiguration cors = new CorsConfiguration();
     cors.setAllowedOrigins(Arrays.asList(origins.split(",")));
     cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+    cors.setAllowCredentials(true);
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", cors);
     return http.csrf(c -> c.disable())
@@ -38,15 +39,7 @@ public class SecurityConfig {
                         "/ws",
                         "/ws/media",
                         "/api/auth/register",
-                        "/api/auth/login",
-                        "/api/config",
-                        "/api/categories",
-                        "/api/explore",
-                        "/api/streams/*",
-                        "/api/streams/*/collaboration",
-                        "/api/streams/*/messages",
-                        "/api/clips/public",
-                        "/api/media/*")
+                        "/api/auth/login")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
@@ -65,9 +58,17 @@ public class SecurityConfig {
               protected void doFilterInternal(
                   HttpServletRequest req, HttpServletResponse res, FilterChain chain)
                   throws ServletException, IOException {
-                String bearer = req.getHeader("Authorization");
-                if (bearer != null && bearer.startsWith("Bearer ")) {
-                  var id = auth.resolve(bearer.substring(7));
+                res.setHeader("Cache-Control", "no-store");
+                String origin = req.getHeader("Origin");
+                if (!Set.of("GET", "HEAD", "OPTIONS").contains(req.getMethod()) && origin != null
+                    && !Arrays.asList(origins.split(",")).contains(origin)) {
+                  res.setStatus(403); res.setContentType("application/json");
+                  res.getWriter().write("{\"error\":\"" + Messages.text("operationFailed") + "\"}"); return;
+                }
+                String token = SessionCookie.token(req);
+                if (token != null) {
+                  UUID id=null;
+                  try {id=auth.resolve(crypto.decrypt(token));} catch (RuntimeException invalid) { /* Invalid encrypted cookies are anonymous. */ }
                   if (id != null)
                     SecurityContextHolder.getContext()
                         .setAuthentication(
@@ -76,7 +77,7 @@ public class SecurityConfig {
                 chain.doFilter(req, res);
               }
             },
-            UsernamePasswordAuthenticationFilter.class)
+            CorsFilter.class)
         .build();
   }
 }

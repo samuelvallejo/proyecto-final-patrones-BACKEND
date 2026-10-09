@@ -69,7 +69,8 @@ public class MediaRelay extends AbstractWebSocketHandler {
               stream);
       if (!"LIVE".equals(row.get("status"))) throw new IllegalArgumentException();
       boolean host = data.path("host").asBoolean(false);
-      UUID user = auth.resolve(data.path("token").asText(null));
+      UUID user = auth.resolveSocket(data.path("token").asText(null));
+      if (user == null) throw new IllegalArgumentException();
       if (host && !Objects.equals(user, row.get("owner_id"))) throw new IllegalArgumentException();
       String format = data.path("format").asText();
       if (host && !FORMATS.contains(format)) throw new IllegalArgumentException();

@@ -32,7 +32,7 @@ class PlatformIntegrationTest {
   private ResponseEntity<Map> call(HttpMethod method, String path, Object body, String token) {
     HttpHeaders h = new HttpHeaders();
     h.setContentType(MediaType.APPLICATION_JSON);
-    if (token != null) h.setBearerAuth(token);
+    if (token != null) h.set("Cookie", token);
     return http.exchange("/api" + path, method, new HttpEntity<>(body, h), Map.class);
   }
 
@@ -53,8 +53,13 @@ class PlatformIntegrationTest {
                 true),
             null);
     assertEquals(200, res.getStatusCode().value());
-    Map u = (Map) res.getBody().get("user");
-    return new User(res.getBody().get("token").toString(), u.get("id").toString(), n);
+    assertEquals(Map.of("ok", true), res.getBody());
+    String cookie=res.getHeaders().getFirst("Set-Cookie");
+    assertNotNull(cookie); assertTrue(cookie.contains("HttpOnly")); assertTrue(cookie.contains("Max-Age=604800"));
+    cookie=cookie.split(";",2)[0];
+    Map u=call(HttpMethod.GET,"/users/me",null,cookie).getBody();
+    assertFalse(u.containsKey("email")); assertFalse(u.containsKey("password_hash"));
+    return new User(cookie, u.get("id").toString(), n);
   }
 
   private String channel(User u) {
@@ -86,9 +91,9 @@ class PlatformIntegrationTest {
   }
 
   @Test
-  void schemaHas67DomainTablesAndForeignKeys() {
+  void schemaHas68DomainTablesAndForeignKeys() {
     assertEquals(
-        67,
+        68,
         db.count(
             "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND"
                 + " table_type='BASE TABLE' AND table_name<>'flyway_schema_history'"));
@@ -118,7 +123,7 @@ class PlatformIntegrationTest {
     assertEquals(200, joined.getStatusCode().value());
     assertEquals(2, ((List<?>) joined.getBody().get("participants")).size());
 
-    var publicRoom = call(HttpMethod.GET, "/streams/" + hostStream + "/collaboration", null, null);
+    var publicRoom = call(HttpMethod.GET, "/streams/" + hostStream + "/collaboration", null, host.token());
     assertEquals(200, publicRoom.getStatusCode().value());
     assertEquals(2, ((List<?>) publicRoom.getBody().get("participants")).size());
 
@@ -148,7 +153,7 @@ class PlatformIntegrationTest {
     assertEquals(409, call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), outsider.token()).getStatusCode().value());
     call(HttpMethod.POST, "/streams/" + hostStream + "/end", Map.of(), host.token());
     assertEquals(404, call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), outsider.token()).getStatusCode().value());
-    assertEquals(false, call(HttpMethod.GET, "/streams/" + hostStream + "/collaboration", null, null).getBody().get("active"));
+    assertEquals(false, call(HttpMethod.GET, "/streams/" + hostStream + "/collaboration", null, host.token()).getBody().get("active"));
     assertEquals(200, call(HttpMethod.POST, "/streams/" + outsiderStream + "/collaborations", Map.of(), outsider.token()).getStatusCode().value());
   }
 
@@ -185,6 +190,37 @@ class PlatformIntegrationTest {
     assertEquals(
         200, call(HttpMethod.POST, "/auth/logout", Map.of(), u.token()).getStatusCode().value());
     assertEquals(401, call(HttpMethod.GET, "/users/me", null, u.token()).getStatusCode().value());
+  }
+
+  @Test
+  void loginPayloadsAreMinimalAndPrivateFieldsAreEncrypted() {
+    User u=user();
+    var row=db.one("SELECT email,email_encrypted,email_lookup,password_hash FROM users WHERE id=?",UUID.fromString(u.id()));
+    assertFalse(row.get("email").toString().contains(u.username()));
+    assertFalse(row.get("email_encrypted").toString().contains("gmail.com"));
+    assertNotEquals("TestPassword123!",row.get("password_hash"));
+    assertEquals(64,row.get("email_lookup").toString().length());
+    var logged=call(HttpMethod.POST,"/auth/login",Map.of("email",u.username()+"@gmail.com","password","TestPassword123!"),null);
+    assertEquals(Map.of("ok",true),logged.getBody());
+    assertEquals(401,call(HttpMethod.GET,"/config",null,null).getStatusCode().value());
+    var cookieHeaders=new HttpHeaders();cookieHeaders.set("Cookie",u.token());cookieHeaders.set("Origin","https://untrusted.example");
+    assertEquals(403,http.exchange("/api/auth/logout",HttpMethod.POST,new HttpEntity<>(Map.of(),cookieHeaders),Map.class).getStatusCode().value());
+  }
+
+  @Test
+  void channelLinksAreGeneratedAndLocationsRequireOwnership() {
+    User owner=user(), stranger=user();
+    var channel=call(HttpMethod.POST,"/channels",Map.of("name","New channel","description",""),owner.token());
+    assertEquals(200,channel.getStatusCode().value());
+    String id=channel.getBody().get("id").toString(); assertTrue(channel.getBody().get("slug").toString().matches("[a-z0-9-]{3,40}"));
+    var position=Map.of("shared",true,"latitude",1.234,"longitude",-76.345);
+    assertEquals(403,call(HttpMethod.PUT,"/channels/"+id+"/location",position,stranger.token()).getStatusCode().value());
+    assertEquals(200,call(HttpMethod.PUT,"/channels/"+id+"/location",position,owner.token()).getStatusCode().value());
+    var stored=db.one("SELECT location_encrypted FROM channels WHERE id=?",UUID.fromString(id));
+    assertFalse(stored.get("location_encrypted").toString().contains("1.234"));
+    assertEquals(true,call(HttpMethod.GET,"/channels/"+id+"/location",null,stranger.token()).getBody().get("shared"));
+    call(HttpMethod.PUT,"/channels/"+id+"/location",Map.of("shared",false),owner.token());
+    assertEquals(false,call(HttpMethod.GET,"/channels/"+id+"/location",null,stranger.token()).getBody().get("shared"));
   }
 
   @Test
@@ -425,7 +461,7 @@ class PlatformIntegrationTest {
     data.add("end", "3");
     data.add("file", new FileSystemResource(video));
     HttpHeaders headers = new HttpHeaders();
-    headers.setBearerAuth(owner.token());
+    headers.set("Cookie",owner.token());
     headers.setContentType(MediaType.MULTIPART_FORM_DATA);
     var clip =
         http.exchange(
@@ -434,12 +470,19 @@ class PlatformIntegrationTest {
             new HttpEntity<>(data, headers),
             Map.class);
     assertEquals(200, clip.getStatusCode().value());
+    headers.remove(HttpHeaders.CONTENT_TYPE);
+    var archiveData=new LinkedMultiValueMap<String,Object>();archiveData.add("start","0");archiveData.add("end","3");archiveData.add("file",new FileSystemResource(video));
+    var archiveHeaders=new HttpHeaders();archiveHeaders.set("Cookie",owner.token());archiveHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+    var archived=http.exchange("/api/streams/"+s+"/recording",HttpMethod.POST,new HttpEntity<>(archiveData,archiveHeaders),Map.class);
+    assertEquals(200,archived.getStatusCode().value());
+    assertEquals(1,db.count("SELECT count(*) FROM stream_recording_parts WHERE stream_id=?",UUID.fromString(s)));
+    assertEquals(403,call(HttpMethod.GET,"/streams/"+s+"/recording",null,other.token()).getStatusCode().value());
     String clipId = clip.getBody().get("id").toString(),
         asset = clip.getBody().get("asset_id").toString();
     assertEquals(1, db.count("SELECT count(*) FROM media_asset_contents WHERE asset_id=?", UUID.fromString(asset)));
     String storageKey = db.one("SELECT storage_key FROM media_assets WHERE id=?", UUID.fromString(asset)).get("storage_key").toString();
     assertEquals(
-        403, http.getForEntity("/api/media/" + asset, String.class).getStatusCode().value());
+        401, http.getForEntity("/api/media/" + asset, String.class).getStatusCode().value());
     assertEquals(
         403,
         call(
@@ -459,10 +502,10 @@ class PlatformIntegrationTest {
             .getStatusCode()
             .value());
     assertEquals(
-        200, http.getForEntity("/api/media/" + asset, byte[].class).getStatusCode().value());
-    byte[] initialDownload = http.getForEntity("/api/media/" + asset, byte[].class).getBody();
+        200, http.exchange("/api/media/" + asset,HttpMethod.GET,new HttpEntity<>(headers),byte[].class).getStatusCode().value());
+    byte[] initialDownload = http.exchange("/api/media/" + asset,HttpMethod.GET,new HttpEntity<>(headers),byte[].class).getBody();
     Files.delete(media.path(storageKey));
-    assertArrayEquals(initialDownload, http.getForEntity("/api/media/" + asset, byte[].class).getBody(),
+    assertArrayEquals(initialDownload, http.exchange("/api/media/" + asset,HttpMethod.GET,new HttpEntity<>(headers),byte[].class).getBody(),
         "Published clips must survive loss of the host's local cache");
     var edit =
         call(
@@ -483,7 +526,7 @@ class PlatformIntegrationTest {
     assertNotEquals(asset, edit.getBody().get("asset_id"));
     String editedAsset = edit.getBody().get("asset_id").toString();
     assertEquals(
-        403, http.getForEntity("/api/media/" + editedAsset, String.class).getStatusCode().value());
+        401, http.getForEntity("/api/media/" + editedAsset, String.class).getStatusCode().value());
     assertEquals(
         1, db.count("SELECT count(*) FROM clip_versions WHERE clip_id=?", UUID.fromString(clipId)));
     assertEquals(

@@ -95,7 +95,8 @@ public class LiveHub extends TextWebSocketHandler {
                 stream);
         if (!row.get("status").equals("LIVE"))
           throw new ApiError(409, Messages.text("clipServiceHighlightText01"));
-        UUID user = auth.resolve(data.path("token").asText(null));
+        UUID user = auth.resolveSocket(data.path("token").asText(null));
+        if (user == null) throw new ApiError(401, Messages.text("operationFailed"));
         boolean host = data.path("host").asBoolean(false);
         boolean owner = Objects.equals(user, row.get("owner_id"));
         if (host && !owner)

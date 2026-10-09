@@ -27,3 +27,7 @@ Una respuesta `UP` en `/actuator/health` confirma que el proceso está sano, per
 Los permisos de cámara y micrófono se solicitan juntos en el frontend. Al compartir pantalla desde un navegador de escritorio compatible, el cliente integra la cámara en una esquina del video y envía una sola pista de video junto al audio por WebRTC o por la pasarela WSS existente. Desactivar la cámara oculta esa superposición sin interrumpir la pantalla ni el micrófono.
 
 Chrome en Android y Safari en iOS no admiten `getDisplayMedia`; el frontend informa esa limitación y ofrece transmitir con cámara y micrófono. Compartir juegos u otras aplicaciones de Android requiere una aplicación nativa con acceso a MediaProjection; el backend por sí solo no puede habilitar esa capacidad en el navegador. El acceso físico a los dispositivos debe comprobarse también en el teléfono real, además de las pruebas automatizadas con fuentes sintéticas.
+
+## Secure workflows update (2026-10-09)
+
+See [secure workflows](docs/secure-workflows.md) for persistent encrypted HttpOnly sessions, local form limits, the light interface, optional location sharing and private profile recordings. The frontend API proxy must target the Render backend. Configure the private DATA_ENCRYPTION_KEY before deploying Flyway V7; retain the existing JWT_SECRET.

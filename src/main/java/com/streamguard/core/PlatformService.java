@@ -52,6 +52,13 @@ public class PlatformService {
   @Transactional
   public Map<String, Object> createChannel(
       UUID user, String name, String slug, String description) {
+    if (slug == null || slug.isBlank()) {
+      String base = java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFD)
+          .replaceAll("\\p{M}", "").toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "-")
+          .replaceAll("^-|-$", "");
+      if (base.length() < 3) base = "channel";
+      slug = base.substring(0, Math.min(base.length(), 28)) + "-" + UUID.randomUUID().toString().substring(0, 8);
+    }
     UUID id =
         db.insert(
             "INSERT INTO channels(owner_id,name,slug,description) VALUES (?,?,?,?) RETURNING id",
@@ -65,7 +72,7 @@ public class PlatformService {
         "INSERT INTO user_roles(user_id,role_id) SELECT ?,id FROM roles WHERE name='STREAMER' ON"
             + " CONFLICT DO NOTHING",
         user);
-    return db.one("SELECT * FROM channels WHERE id=?", id);
+    return db.one("SELECT id,name,slug,description FROM channels WHERE id=?", id);
   }
 
   @Transactional
@@ -202,7 +209,7 @@ public class PlatformService {
         db.optional(
             "SELECT * FROM streams WHERE channel_id=? ORDER BY started_at DESC LIMIT 1", channel);
     Map<String, Object> out = new HashMap<>();
-    out.put("channel", db.one("SELECT * FROM channels WHERE id=?", channel));
+    out.put("channel", db.one("SELECT id,owner_id,name,slug,description,location_shared FROM channels WHERE id=?", channel));
     out.put("stream", s.orElse(null));
     out.put("policy", policy(channel));
     out.put("settings", db.one("SELECT * FROM channel_settings WHERE channel_id=?", channel));

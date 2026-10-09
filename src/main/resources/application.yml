@@ -2,6 +2,9 @@ server:
   port: ${PORT:8080}
   error:
     include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    include-exception: false
 spring:
   datasource:
     url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/streamguard}
@@ -27,6 +30,8 @@ management:
     health:
       show-details: never
 app:
+  data-encryption-key: ${DATA_ENCRYPTION_KEY:}
+  archive-budget-bytes: ${ARCHIVE_BUDGET_BYTES:209715200}
   origins: ${FRONTEND_ORIGIN:http://localhost:5173}
   jwt-secret: ${JWT_SECRET:}
   media-dir: ${MEDIA_DIR:./.local/media}

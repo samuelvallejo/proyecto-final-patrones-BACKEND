@@ -53,7 +53,7 @@ public class PlatformController {
 
   public record Channel(
       @NotBlank @Size(max = 80) String name,
-      @NotNull @Pattern(regexp = "[a-z0-9-]{3,40}") String slug,
+      @Pattern(regexp = "[a-z0-9-]{3,40}") String slug,
       @NotNull @Size(max = 2000) String description) {}
 
   public record Start(
@@ -147,7 +147,7 @@ public class PlatformController {
   public List<?> mine() {
     UUID user = AuthService.current();
     return db.list(
-        "SELECT c.*,c.owner_id=? AS is_owner FROM channels c WHERE c.owner_id=? OR EXISTS(SELECT 1"
+        "SELECT c.id,c.name,c.slug,c.owner_id=? AS is_owner FROM channels c WHERE c.owner_id=? OR EXISTS(SELECT 1"
             + " FROM channel_moderators m WHERE m.channel_id=c.id AND m.user_id=?)",
         user,
         user,

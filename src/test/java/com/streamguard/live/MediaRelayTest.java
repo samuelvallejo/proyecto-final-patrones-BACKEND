@@ -22,7 +22,8 @@ class MediaRelayTest {
     auth = mock(AuthService.class);
     when(db.one(anyString(), eq(stream))).thenReturn(Map.of("status", "LIVE", "owner_id", owner));
     when(db.count(anyString(), eq(stream))).thenReturn(1L);
-    when(auth.resolve("owner-token")).thenReturn(owner);
+    when(auth.resolveSocket("owner-token")).thenReturn(owner);
+    when(auth.resolveSocket("viewer-ticket")).thenReturn(UUID.randomUUID());
     relay = new MediaRelay(db, auth, new ObjectMapper(), 2);
   }
 
@@ -58,16 +59,16 @@ class MediaRelayTest {
   }
 
   @Test
-  void ownerCanPublishAndGuestReceivesFragmentsWithoutAuthentication() throws Exception {
+  void ownerCanPublishAndAuthenticatedViewerReceivesFragments() throws Exception {
     var host = socket("host");
     var viewer = socket("viewer");
     join(host, true, "owner-token");
-    join(viewer, false, "");
+    join(viewer, false, "viewer-ticket");
     byte[] fragment = {0x1a, 0x45, (byte) 0xdf, (byte) 0xa3, 1};
     relay.handleBinaryMessage(host, new BinaryMessage(fragment));
     verify(viewer, timeout(2000)).sendMessage(isA(BinaryMessage.class));
     var late = socket("late");
-    join(late, false, "");
+    join(late, false, "viewer-ticket");
     verify(late, timeout(2000)).sendMessage(isA(BinaryMessage.class));
     relay.afterConnectionClosed(viewer, CloseStatus.NORMAL);
     relay.afterConnectionClosed(late, CloseStatus.NORMAL);
@@ -85,7 +86,7 @@ class MediaRelayTest {
     join(intruder, true, "");
     verify(intruder).close(CloseStatus.POLICY_VIOLATION);
     var viewer = socket("viewer");
-    join(viewer, false, "");
+    join(viewer, false, "viewer-ticket");
     relay.handleBinaryMessage(viewer, new BinaryMessage(new byte[] {1}));
     verify(viewer).close(CloseStatus.POLICY_VIOLATION);
   }
@@ -106,9 +107,9 @@ class MediaRelayTest {
     var first = socket("first");
     var second = socket("second");
     var third = socket("third");
-    join(first, false, "");
-    join(second, false, "");
-    join(third, false, "");
+    join(first, false, "viewer-ticket");
+    join(second, false, "viewer-ticket");
+    join(third, false, "viewer-ticket");
     verify(third).close(CloseStatus.POLICY_VIOLATION);
     var host = socket("host");
     join(host, true, "owner-token");
@@ -124,7 +125,7 @@ class MediaRelayTest {
     var replacement = socket("replacement");
     var viewer = socket("viewer");
     join(original, true, "owner-token");
-    join(viewer, false, "");
+    join(viewer, false, "viewer-ticket");
     join(replacement, true, "owner-token");
     verify(original).close(CloseStatus.POLICY_VIOLATION);
     relay.afterConnectionClosed(original, CloseStatus.POLICY_VIOLATION);

@@ -12,6 +12,16 @@ import org.junit.jupiter.api.Test;
 /** Tests the small classes of the login module without a database. */
 class AuthPartsTest {
   @Test
+  void connectionTicketsAreConsumedOnceAndCannotOutliveLogout() {
+    var sessions=org.mockito.Mockito.mock(SessionRepository.class);
+    var generator=new TokenGenerator(SECRET); var user=UUID.randomUUID(); String token=generator.generate(user);
+    org.mockito.Mockito.when(sessions.findActiveUser(TokenHasher.hash(token))).thenReturn(Optional.of(user));
+    var auth=new AuthService(org.mockito.Mockito.mock(UserRepository.class),sessions,new PasswordHasher(),generator);
+    String first=auth.issueSocketTicket(user,token); assertEquals(user,auth.resolveSocket(first)); assertNull(auth.resolveSocket(first));
+    String second=auth.issueSocketTicket(user,token);
+    org.mockito.Mockito.when(sessions.findActiveUser(TokenHasher.hash(token))).thenReturn(Optional.empty()); assertNull(auth.resolveSocket(second));
+  }
+  @Test
   void tokenHasherGivesTheKnownSha256OfAbc() {
     assertEquals(
         "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",

@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class AuthService {
+  private record SocketTicket(UUID user, String sessionHash, long expires) {}
+  private final java.util.concurrent.ConcurrentHashMap<String, SocketTicket> socketTickets = new java.util.concurrent.ConcurrentHashMap<>();
   private static final int MAX_TOKEN_LENGTH = 512;
 
   private final UserRepository users;
@@ -40,6 +42,23 @@ public class AuthService {
     var signed = tokens.userOf(token);
     if (signed.isEmpty()) return null;
     return sessions.findActiveUser(TokenHasher.hash(token)).filter(signed.get()::equals).orElse(null);
+  }
+
+  public String issueSocketTicket(UUID user, String sessionToken) {
+    long now = System.currentTimeMillis();
+    socketTickets.entrySet().removeIf(entry -> entry.getValue().expires() < now);
+    if (socketTickets.size() > 10000) throw new ApiError(429, Messages.text("operationFailed"));
+    byte[] random = new byte[32]; new java.security.SecureRandom().nextBytes(random);
+    String ticket = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(random);
+    socketTickets.put(TokenHasher.hash(ticket), new SocketTicket(user, TokenHasher.hash(sessionToken), now + 30000));
+    return ticket;
+  }
+
+  public UUID resolveSocket(String ticket) {
+    if (ticket == null || ticket.length() > 100) return null;
+    SocketTicket entry = socketTickets.remove(TokenHasher.hash(ticket));
+    if (entry == null || entry.expires() < System.currentTimeMillis()) return null;
+    return sessions.findActiveUser(entry.sessionHash()).filter(entry.user()::equals).orElse(null);
   }
 
   public static UUID current() {

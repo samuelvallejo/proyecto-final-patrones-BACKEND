@@ -14,11 +14,10 @@ public class SessionRepository {
     this.db = db;
   }
 
-  /** Save a session that expires in two hours (the same time as {@link TokenGenerator#LIFETIME}). */
+  /** Match the persistent cookie and JWT lifetime. */
   public void create(UUID user, String tokenHash) {
     db.exec(
-        "INSERT INTO auth_sessions(user_id,token_hash,expires_at) VALUES (?,?,now()+interval '2"
-            + " hours')",
+        "INSERT INTO auth_sessions(user_id,token_hash,expires_at) VALUES (?,?,now()+interval '7 days')",
         user,
         tokenHash);
   }

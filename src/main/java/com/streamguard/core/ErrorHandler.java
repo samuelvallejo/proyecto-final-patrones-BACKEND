@@ -11,12 +11,13 @@ import org.springframework.web.bind.annotation.*;
 @RestControllerAdvice
 public class ErrorHandler {
   @ExceptionHandler(ApiError.class)
-  ResponseEntity<?> api(ApiError e) {
-    return ResponseEntity.status(e.status).body(Map.of("error", e.getMessage()));
+  ResponseEntity<?> api(ApiError e, jakarta.servlet.http.HttpServletRequest request) {
+    return ResponseEntity.status(e.status).body(Map.of("error", request.getRequestURI().startsWith("/api/auth/") ? Messages.text("authFailed") : e.getMessage()));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  ResponseEntity<?> validation(MethodArgumentNotValidException e) {
+  ResponseEntity<?> validation(MethodArgumentNotValidException e, jakarta.servlet.http.HttpServletRequest request) {
+    if (request.getRequestURI().startsWith("/api/auth/")) return ResponseEntity.badRequest().body(Map.of("error", Messages.text("authFailed")));
     return ResponseEntity.badRequest()
         .body(
             Map.of(
@@ -86,5 +87,10 @@ public class ErrorHandler {
   ResponseEntity<?> conflict(Exception e) {
     return ResponseEntity.status(409)
         .body(Map.of("error", Messages.text("errorHandlerMessageText03")));
+  }
+
+  @ExceptionHandler(Exception.class)
+  ResponseEntity<?> unexpected(Exception e) {
+    return ResponseEntity.status(500).body(Map.of("error", Messages.text("operationFailed")));
   }
 }

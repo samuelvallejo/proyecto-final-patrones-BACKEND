@@ -100,5 +100,8 @@
   "collaborationEnded": "La colaboración ya finalizó.",
   "collaborationNotMember": "No perteneces a esta colaboración.",
   "collaborationRequiresLive": "Debes tener una transmisión activa para colaborar.",
-  "collaborationAlreadyJoined": "Tu directo ya pertenece a una colaboración. Sal de esa sala antes de crear otra o unirte a una diferente."
+  "collaborationAlreadyJoined": "Tu directo ya pertenece a una colaboración. Sal de esa sala antes de crear otra o unirte a una diferente.",
+  "operationFailed": "No se pudo completar la operación. Vuelve a intentarlo.",
+  "authFailed": "No se pudo completar el acceso. Revisa el formulario e inténtalo nuevamente.",
+  "archiveFull": "Se alcanzó el límite de almacenamiento para grabaciones."
 }

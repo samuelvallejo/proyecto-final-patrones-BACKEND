@@ -4,6 +4,7 @@ spring:
     username: ${TEST_PGUSER:streamguard}
     password: ${TEST_PGPASSWORD:streamguard}
 app:
+  data-encryption-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
   gemini-key: ''
   media-dir: ${TEST_MEDIA_DIR:./target/test-media}
   media-work-dir: ${TEST_MEDIA_WORK_DIR:./target/test-media-work}

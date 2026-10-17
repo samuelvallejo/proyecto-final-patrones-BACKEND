@@ -1363,5 +1363,24 @@
       "blockedTopics": [],
       "allowLinks": false
     }
+  },
+  {
+    "id": "balanced-flags-1-duration-300",
+    "valid": true,
+    "policy": {
+      "level": "BALANCED",
+      "autoHide": true,
+      "autoMute": false,
+      "muteSeconds": 300,
+      "reviewThreshold": 0.55,
+      "blockThreshold": 0.85,
+      "blockedWords": [
+        "restricted"
+      ],
+      "blockedTopics": [
+        "private"
+      ],
+      "allowLinks": false
+    }
   }
 ]

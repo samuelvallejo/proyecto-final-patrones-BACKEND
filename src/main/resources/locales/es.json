@@ -103,5 +103,11 @@
   "collaborationAlreadyJoined": "Tu directo ya pertenece a una colaboración. Sal de esa sala antes de crear otra o unirte a una diferente.",
   "operationFailed": "No se pudo completar la operación. Vuelve a intentarlo.",
   "authFailed": "No se pudo completar el acceso. Revisa el formulario e inténtalo nuevamente.",
-  "archiveFull": "Se alcanzó el límite de almacenamiento para grabaciones."
+  "archiveFull": "Se alcanzó el límite de almacenamiento para grabaciones.",
+  "geminiChatUnavailable": "El chat de Gemini no está disponible por ahora.",
+  "geminiChatHistoryLimit": "La conversación es demasiado larga. Inicia una nueva conversación.",
+  "geminiChatBusy": "El asistente está atendiendo otra pregunta. Inténtalo en unos segundos.",
+  "geminiChatRateLimit": "Has enviado varias preguntas seguidas. Espera un minuto antes de continuar.",
+  "geminiChatQuota": "Gemini alcanzó su límite de solicitudes. Inténtalo más tarde.",
+  "geminiChatFailed": "Gemini no pudo responder. Inténtalo de nuevo en unos momentos."
 }

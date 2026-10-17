@@ -37,3 +37,7 @@ Chrome en Android y Safari en iOS no admiten `getDisplayMedia`; el frontend info
 ## Secure workflows update (2026-10-09)
 
 See [secure workflows](docs/secure-workflows.md) for persistent encrypted HttpOnly sessions, local form limits, the light interface, optional location sharing and private profile recordings. The frontend API proxy must target the Render backend. Configure the private DATA_ENCRYPTION_KEY before deploying Flyway V7; retain the existing JWT_SECRET.
+
+## Gemini chat
+
+Authenticated question-and-answer endpoints use Gemini independently of the moderation provider. See [the conversation gateway](docs/gemini-chat.md) for privacy, input limits, rate limiting and configuration.

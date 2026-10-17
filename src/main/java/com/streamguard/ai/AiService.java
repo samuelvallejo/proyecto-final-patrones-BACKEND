@@ -92,29 +92,14 @@ public class AiService {
   public Analysis moderate(UUID stream, String text, ModerationPolicy policy) {
     UUID id = request(stream, "MODERATION", Map.of("message", text, "level", policy.level()));
     long start = System.currentTimeMillis();
-    // Local restrictions remain authoritative and save an unnecessary provider request.
-    Verdict local = new AiToolkitFactory.LocalToolkit(json).moderation().analyze(text, policy);
-    if (!local.category().equals("SAFE")) {
-      response(id, local, start, "LOCAL");
-      return new Analysis(id, local);
-    }
-    boolean acquired = slots.tryAcquire();
-    try {
-      if (!acquired) throw new IllegalStateException("AI concurrency limit reached");
-      Verdict result = toolkit().moderation().analyze(text, policy);
-      response(id, result, start, configured() ? "SUCCEEDED" : "LOCAL");
-      return new Analysis(id, result);
-    } catch (Exception e) {
-      log.warn("Moderation provider {} failed: {}", provider, e.getMessage());
-      Verdict result =
-          new Verdict(local.category(), local.confidence(), local.reason(), "LOCAL_RULES");
-      // The database constraint only accepts PENDING, SUCCEEDED, FAILED, or LOCAL.
-      // This response is produced by the local rules after the provider fails.
-      response(id, result, start, "LOCAL");
-      return new Analysis(id, result);
-    } finally {
-      if (acquired) slots.release();
-    }
+    var local = new AiToolkitFactory.LocalToolkit(json).moderation();
+    var limited = new ConcurrencyLimitedModerationDecorator(toolkit().moderation(), slots);
+    var resilient = new FallbackModerationDecorator(limited, local,
+        failure -> log.warn("Moderation provider {} failed; local rules applied", provider));
+    var analyzer = new LocalRulesModerationDecorator(resilient, local);
+    Verdict result = analyzer.analyze(text, policy);
+    response(id, result, start, result.provider().equals("LOCAL_RULES") ? "LOCAL" : "SUCCEEDED");
+    return new Analysis(id, result);
   }
 
   public Editorial editorial(UUID stream, JsonNode input) {

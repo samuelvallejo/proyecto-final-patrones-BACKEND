@@ -2098,5 +2098,20 @@
       ],
       "allowLinks": true
     }
+  },
+  {
+    "id": "balanced-flags-6-duration-30",
+    "valid": true,
+    "policy": {
+      "level": "BALANCED",
+      "autoHide": false,
+      "autoMute": true,
+      "muteSeconds": 30,
+      "reviewThreshold": 0.55,
+      "blockThreshold": 0.85,
+      "blockedWords": [],
+      "blockedTopics": [],
+      "allowLinks": true
+    }
   }
 ]

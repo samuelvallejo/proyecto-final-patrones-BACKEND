@@ -2548,5 +2548,20 @@
       ],
       "allowLinks": false
     }
+  },
+  {
+    "id": "strict-flags-1-duration-30",
+    "valid": true,
+    "policy": {
+      "level": "STRICT",
+      "autoHide": true,
+      "autoMute": false,
+      "muteSeconds": 30,
+      "reviewThreshold": 0.4,
+      "blockThreshold": 0.7,
+      "blockedWords": [],
+      "blockedTopics": [],
+      "allowLinks": false
+    }
   }
 ]

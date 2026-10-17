@@ -208,6 +208,8 @@ public class PlatformService {
     var s =
         db.optional(
             "SELECT * FROM streams WHERE channel_id=? ORDER BY started_at DESC LIMIT 1", channel);
+    s.ifPresent(stream -> stream.put("viewers", "LIVE".equals(stream.get("status"))
+        ? hub.viewers(Db.id(stream.get("id"))) : 0));
     Map<String, Object> out = new HashMap<>();
     out.put("channel", db.one("SELECT id,owner_id,name,slug,description,location_shared FROM channels WHERE id=?", channel));
     out.put("stream", s.orElse(null));

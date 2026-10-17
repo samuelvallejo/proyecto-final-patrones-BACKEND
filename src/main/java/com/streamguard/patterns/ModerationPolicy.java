@@ -12,7 +12,57 @@ public record ModerationPolicy(
     double blockThreshold,
     List<String> blockedWords,
     List<String> blockedTopics,
-    boolean allowLinks) {
+    boolean allowLinks)
+    implements Prototype<ModerationPolicy> {
+  public ModerationPolicy {
+    if (level == null
+        || !Set.of("RELAXED", "BALANCED", "STRICT").contains(level)
+        || muteSeconds < 30
+        || muteSeconds > 86400
+        || !Double.isFinite(reviewThreshold)
+        || !Double.isFinite(blockThreshold)
+        || reviewThreshold < 0
+        || blockThreshold > 1
+        || reviewThreshold > blockThreshold) throw new IllegalArgumentException("Invalid policy");
+    blockedWords = restrictions(blockedWords, 50, 80);
+    blockedTopics = restrictions(blockedTopics, 30, 120);
+  }
+
+  private static List<String> restrictions(List<String> values, int count, int length) {
+    if (values == null
+        || values.size() > count
+        || values.stream()
+            .anyMatch(value -> value == null || value.isBlank() || value.length() > length))
+      throw new IllegalArgumentException("Invalid policy restrictions");
+    return List.copyOf(values);
+  }
+
+  @Override
+  public ModerationPolicy copy() {
+    return new ModerationPolicy(
+        level,
+        autoHide,
+        autoMute,
+        muteSeconds,
+        reviewThreshold,
+        blockThreshold,
+        blockedWords,
+        blockedTopics,
+        allowLinks);
+  }
+
+  public Builder toBuilder() {
+    return new Builder()
+        .level(level)
+        .autoHide(autoHide)
+        .autoMute(autoMute)
+        .muteSeconds(muteSeconds)
+        .thresholds(reviewThreshold, blockThreshold)
+        .blockedWords(blockedWords)
+        .blockedTopics(blockedTopics)
+        .allowLinks(allowLinks);
+  }
+
   public static class Builder {
     private String level = "BALANCED";
     private boolean hide = true, mute = false, links = false;
@@ -47,12 +97,12 @@ public record ModerationPolicy(
     }
 
     public Builder blockedWords(List<String> value) {
-      words = List.copyOf(value);
+      words = restrictions(value, 50, 80);
       return this;
     }
 
     public Builder blockedTopics(List<String> value) {
-      topics = List.copyOf(value);
+      topics = restrictions(value, 30, 120);
       return this;
     }
 
@@ -62,14 +112,6 @@ public record ModerationPolicy(
     }
 
     public ModerationPolicy build() {
-      if (!Set.of("RELAXED", "BALANCED", "STRICT").contains(level)
-          || seconds < 30
-          || seconds > 86400
-          || !Double.isFinite(review)
-          || !Double.isFinite(block)
-          || review < 0
-          || block > 1
-          || review > block) throw new IllegalArgumentException("Invalid policy");
       return new ModerationPolicy(level, hide, mute, seconds, review, block, words, topics, links);
     }
   }

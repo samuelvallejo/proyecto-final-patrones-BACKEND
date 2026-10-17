@@ -3332,5 +3332,24 @@
       ],
       "allowLinks": true
     }
+  },
+  {
+    "id": "strict-flags-6-duration-3600",
+    "valid": true,
+    "policy": {
+      "level": "STRICT",
+      "autoHide": false,
+      "autoMute": true,
+      "muteSeconds": 3600,
+      "reviewThreshold": 0.4,
+      "blockThreshold": 0.7,
+      "blockedWords": [
+        "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      ],
+      "blockedTopics": [
+        "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"
+      ],
+      "allowLinks": true
+    }
   }
 ]

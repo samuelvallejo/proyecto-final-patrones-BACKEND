@@ -1832,5 +1832,24 @@
       ],
       "allowLinks": true
     }
+  },
+  {
+    "id": "balanced-flags-4-duration-3600",
+    "valid": true,
+    "policy": {
+      "level": "BALANCED",
+      "autoHide": false,
+      "autoMute": false,
+      "muteSeconds": 3600,
+      "reviewThreshold": 0.55,
+      "blockThreshold": 0.85,
+      "blockedWords": [
+        "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      ],
+      "blockedTopics": [
+        "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"
+      ],
+      "allowLinks": true
+    }
   }
 ]

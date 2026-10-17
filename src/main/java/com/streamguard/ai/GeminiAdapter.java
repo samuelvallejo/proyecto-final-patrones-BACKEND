@@ -1,6 +1,7 @@
 package com.streamguard.ai;
 
 import com.fasterxml.jackson.databind.*;
+import com.streamguard.patterns.SharedAiHttpClient;
 import java.net.URI;
 import java.net.http.*;
 import java.time.Duration;
@@ -13,8 +14,7 @@ import org.springframework.stereotype.Component;
 public class GeminiAdapter implements AiGateway {
   private final ObjectMapper json;
   private final String key, model;
-  private final HttpClient client =
-      HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
+  private final HttpClient client = SharedAiHttpClient.getInstance().client();
 
   public GeminiAdapter(
       ObjectMapper json,

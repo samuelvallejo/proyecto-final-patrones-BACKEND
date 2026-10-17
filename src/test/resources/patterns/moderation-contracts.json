@@ -3688,5 +3688,20 @@
       "blockedTopics": [],
       "allowLinks": false
     }
+  },
+  {
+    "id": "reject-level-7",
+    "valid": false,
+    "policy": {
+      "level": "strict",
+      "autoHide": true,
+      "autoMute": false,
+      "muteSeconds": 300,
+      "reviewThreshold": 0.55,
+      "blockThreshold": 0.85,
+      "blockedWords": [],
+      "blockedTopics": [],
+      "allowLinks": false
+    }
   }
 ]

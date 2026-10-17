@@ -3838,5 +3838,20 @@
       "blockedTopics": [],
       "allowLinks": false
     }
+  },
+  {
+    "id": "reject-threshold-pair-3",
+    "valid": false,
+    "policy": {
+      "level": "BALANCED",
+      "autoHide": true,
+      "autoMute": false,
+      "muteSeconds": 300,
+      "reviewThreshold": 0.9,
+      "blockThreshold": 0.85,
+      "blockedWords": [],
+      "blockedTopics": [],
+      "allowLinks": false
+    }
   }
 ]

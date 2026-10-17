@@ -91,6 +91,93 @@ class PlatformIntegrationTest {
   }
 
   @Test
+  void policyPresetsRequireOwnershipAndDoNotSaveUntilConfirmed() {
+    User owner = user();
+    String channel = channel(owner);
+    var custom =
+        Map.of(
+            "level",
+            "BALANCED",
+            "autoHide",
+            false,
+            "autoMute",
+            true,
+            "muteSeconds",
+            90,
+            "reviewThreshold",
+            .55,
+            "blockThreshold",
+            .85,
+            "blockedWords",
+            List.of("restricted"),
+            "blockedTopics",
+            List.of("private"),
+            "allowLinks",
+            true,
+            "slowMode",
+            2);
+    assertEquals(
+        200,
+        call(HttpMethod.PUT, "/channels/" + channel + "/policy", custom, owner.token())
+            .getStatusCode()
+            .value());
+    var preview =
+        call(
+            HttpMethod.GET, "/channels/" + channel + "/policy-presets/STRICT", null, owner.token());
+    assertEquals(200, preview.getStatusCode().value());
+    assertEquals("STRICT", preview.getBody().get("level"));
+    assertEquals(List.of("restricted"), preview.getBody().get("blockedWords"));
+    assertEquals(List.of("private"), preview.getBody().get("blockedTopics"));
+    assertEquals(true, preview.getBody().get("allowLinks"));
+    var dashboard =
+        call(HttpMethod.GET, "/channels/" + channel + "/dashboard", null, owner.token());
+    assertEquals(200, dashboard.getStatusCode().value());
+    assertEquals("BALANCED", ((Map<?, ?>) dashboard.getBody().get("policy")).get("level"));
+    assertEquals(3, ((List<?>) dashboard.getBody().get("moderationPresets")).size());
+    assertEquals(
+        Set.of("provider", "model", "configured"),
+        ((Map<?, ?>) dashboard.getBody().get("assistantCapabilities")).keySet());
+    assertEquals(
+        403,
+        call(
+                HttpMethod.GET,
+                "/channels/" + channel + "/policy-presets/STRICT",
+                null,
+                user().token())
+            .getStatusCode()
+            .value());
+    assertEquals(
+        401,
+        call(HttpMethod.GET, "/channels/" + channel + "/policy-presets/STRICT", null, null)
+            .getStatusCode()
+            .value());
+    assertEquals(
+        400,
+        call(
+                HttpMethod.GET,
+                "/channels/" + channel + "/policy-presets/UNKNOWN",
+                null,
+                owner.token())
+            .getStatusCode()
+            .value());
+    var saved = new HashMap<String, Object>(preview.getBody());
+    saved.put("slowMode", 2);
+    saved.put("autoClips", false);
+    assertEquals(
+        200,
+        call(HttpMethod.PUT, "/channels/" + channel + "/policy", saved, owner.token())
+            .getStatusCode()
+            .value());
+    var finalPolicy =
+        (Map<?, ?>)
+            call(HttpMethod.GET, "/channels/" + channel + "/dashboard", null, owner.token())
+                .getBody()
+                .get("policy");
+    assertEquals("STRICT", finalPolicy.get("level"));
+    assertEquals(List.of("restricted"), finalPolicy.get("blockedWords"));
+  }
+
+  @Test
   void schemaHas68DomainTablesAndForeignKeys() {
     assertEquals(
         68,

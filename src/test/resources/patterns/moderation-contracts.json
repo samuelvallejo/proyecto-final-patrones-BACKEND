@@ -3718,5 +3718,20 @@
       "blockedTopics": [],
       "allowLinks": false
     }
+  },
+  {
+    "id": "reject-duration-0",
+    "valid": false,
+    "policy": {
+      "level": "BALANCED",
+      "autoHide": true,
+      "autoMute": false,
+      "muteSeconds": 0,
+      "reviewThreshold": 0.55,
+      "blockThreshold": 0.85,
+      "blockedWords": [],
+      "blockedTopics": [],
+      "allowLinks": false
+    }
   }
 ]

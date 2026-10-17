@@ -163,5 +163,24 @@
       "blockedTopics": [],
       "allowLinks": false
     }
+  },
+  {
+    "id": "relaxed-flags-1-duration-300",
+    "valid": true,
+    "policy": {
+      "level": "RELAXED",
+      "autoHide": true,
+      "autoMute": false,
+      "muteSeconds": 300,
+      "reviewThreshold": 0.7,
+      "blockThreshold": 0.95,
+      "blockedWords": [
+        "restricted"
+      ],
+      "blockedTopics": [
+        "private"
+      ],
+      "allowLinks": false
+    }
   }
 ]

@@ -748,5 +748,20 @@
       ],
       "allowLinks": true
     }
+  },
+  {
+    "id": "relaxed-flags-5-duration-30",
+    "valid": true,
+    "policy": {
+      "level": "RELAXED",
+      "autoHide": true,
+      "autoMute": false,
+      "muteSeconds": 30,
+      "reviewThreshold": 0.7,
+      "blockThreshold": 0.95,
+      "blockedWords": [],
+      "blockedTopics": [],
+      "allowLinks": true
+    }
   }
 ]

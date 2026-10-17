@@ -1,6 +1,7 @@
 package com.streamguard.ai;
 
 import com.fasterxml.jackson.databind.*;
+import com.streamguard.patterns.SharedAiHttpClient;
 import java.net.URI;
 import java.net.http.*;
 import java.time.Duration;
@@ -15,11 +16,7 @@ public class OllamaAdapter implements AiGateway {
   private final String url;
   private final String token;
   private final String model;
-  private final HttpClient http =
-      HttpClient.newBuilder()
-          .version(HttpClient.Version.HTTP_1_1)
-          .connectTimeout(Duration.ofSeconds(8))
-          .build();
+  private final HttpClient http = SharedAiHttpClient.getInstance().client();
 
   public OllamaAdapter(
       ObjectMapper json,

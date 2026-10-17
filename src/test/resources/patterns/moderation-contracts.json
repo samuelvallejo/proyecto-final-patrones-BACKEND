@@ -3598,5 +3598,20 @@
       ],
       "allowLinks": true
     }
+  },
+  {
+    "id": "reject-level-1",
+    "valid": false,
+    "policy": {
+      "level": null,
+      "autoHide": true,
+      "autoMute": false,
+      "muteSeconds": 300,
+      "reviewThreshold": 0.55,
+      "blockThreshold": 0.85,
+      "blockedWords": [],
+      "blockedTopics": [],
+      "allowLinks": false
+    }
   }
 ]

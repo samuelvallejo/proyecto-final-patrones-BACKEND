@@ -50,6 +50,7 @@ public class LiveHub extends TextWebSocketHandler {
 
   private static class Room {
     String host;
+    String mediaTransport = "webrtc";
     ScheduledFuture<?> expiry;
     final Set<String> viewers = ConcurrentHashMap.newKeySet();
   }
@@ -139,6 +140,8 @@ public class LiveHub extends TextWebSocketHandler {
             room.expiry = null;
           }
           room.host = socket.getId();
+          room.mediaTransport =
+              "relay".equals(data.path("mediaTransport").asText()) ? "relay" : "webrtc";
         } else room.viewers.add(socket.getId());
         send(
             wrapped,
@@ -150,7 +153,9 @@ public class LiveHub extends TextWebSocketHandler {
                 "moderator",
                 moderator,
                 "hostOnline",
-                room.host != null));
+                room.host != null,
+                "mediaTransport",
+                room.mediaTransport));
         if (host) {
           for (String viewer : room.viewers)
             send(wrapped, Map.of("type", "viewer-joined", "peerId", viewer));
@@ -166,7 +171,9 @@ public class LiveHub extends TextWebSocketHandler {
                 "viewers",
                 room.viewers.size(),
                 "hostOnline",
-                room.host != null));
+                room.host != null,
+                "mediaTransport",
+                room.mediaTransport));
       } else {
         Peer sender = peers.get(socket.getId());
         if (sender == null)

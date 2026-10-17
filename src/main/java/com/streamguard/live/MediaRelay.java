@@ -34,6 +34,7 @@ public class MediaRelay extends AbstractWebSocketHandler {
   private static class Room {
     String host;
     String format;
+    String fragmentMode = "stream";
     byte[] latest;
     long updated;
     final Set<String> viewers = new HashSet<>();
@@ -90,6 +91,7 @@ public class MediaRelay extends AbstractWebSocketHandler {
         Peer previous = room.host == null ? null : peers.remove(room.host);
         room.host = socket.getId();
         room.format = format;
+        room.fragmentMode = "file".equals(data.path("fragmentMode").asText()) ? "file" : "stream";
         room.latest = null;
         if (previous != null) {
           try {
@@ -100,10 +102,21 @@ public class MediaRelay extends AbstractWebSocketHandler {
         }
         send(peer, Map.of("type", "relay-ready", "viewers", room.viewers.size()));
         for (String viewer : room.viewers)
-          send(peers.get(viewer), Map.of("type", "relay-format", "format", format));
+          send(
+              peers.get(viewer),
+              Map.of("type", "relay-format", "format", format, "fragmentMode", room.fragmentMode));
       } else {
         room.viewers.add(socket.getId());
-        if (room.format != null) send(peer, Map.of("type", "relay-format", "format", room.format));
+        if (room.format != null)
+          send(
+              peer,
+              Map.of(
+                  "type",
+                  "relay-format",
+                  "format",
+                  room.format,
+                  "fragmentMode",
+                  room.fragmentMode));
         if (room.latest != null && System.currentTimeMillis() - room.updated < 8000)
           deliver(peer, room.latest);
         demand(room);

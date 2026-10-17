@@ -59,6 +59,43 @@ class MediaRelayTest {
   }
 
   @Test
+  void nativePublisherAdvertisesIndependentMp4FilesToExistingAndLateViewers() throws Exception {
+    var viewer = socket("existing");
+    join(viewer, false, "viewer-ticket");
+    var host = socket("native");
+    relay.handleTextMessage(
+        host,
+        new TextMessage(
+            new ObjectMapper()
+                .writeValueAsString(
+                    Map.of(
+                        "type",
+                        "join",
+                        "streamId",
+                        stream.toString(),
+                        "host",
+                        true,
+                        "token",
+                        "owner-token",
+                        "format",
+                        "video/mp4",
+                        "fragmentMode",
+                        "file"))));
+    var late = socket("late");
+    join(late, false, "viewer-ticket");
+    for (var recipient : List.of(viewer, late))
+      verify(recipient)
+          .sendMessage(
+              argThat(
+                  message ->
+                      message instanceof TextMessage
+                          && ((TextMessage) message)
+                              .getPayload()
+                              .contains("\"fragmentMode\":\"file\"")
+                          && ((TextMessage) message).getPayload().contains("video/mp4")));
+  }
+
+  @Test
   void ownerCanPublishAndAuthenticatedViewerReceivesFragments() throws Exception {
     var host = socket("host");
     var viewer = socket("viewer");

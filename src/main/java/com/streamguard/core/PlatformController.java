@@ -4,6 +4,7 @@ import com.streamguard.ai.AiService;
 import com.streamguard.auth.AuthService;
 import com.streamguard.i18n.Messages;
 import com.streamguard.patterns.ModerationPolicy;
+import com.streamguard.patterns.CreatorStudioFacade;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.util.*;
@@ -23,6 +24,7 @@ public class PlatformController {
   private final MediaService media;
   private final Db db;
   private final AiService ai;
+  private final CreatorStudioFacade studio;
 
   @Value("${app.max-viewers}")
   private int maxViewers;
@@ -42,13 +44,15 @@ public class PlatformController {
       ClipService clips,
       MediaService media,
       Db db,
-      AiService ai) {
+      AiService ai,
+      CreatorStudioFacade studio) {
     this.platform = platform;
     this.chat = chat;
     this.clips = clips;
     this.media = media;
     this.db = db;
     this.ai = ai;
+    this.studio = studio;
   }
 
   public record Channel(
@@ -156,7 +160,12 @@ public class PlatformController {
 
   @GetMapping("/channels/{channel}/dashboard")
   public Map<?, ?> dashboard(@PathVariable UUID channel) {
-    return platform.dashboard(AuthService.current(), channel);
+    return studio.dashboard(AuthService.current(), channel);
+  }
+
+  @GetMapping("/channels/{channel}/policy-presets/{level}")
+  public ModerationPolicy preset(@PathVariable UUID channel, @PathVariable String level) {
+    return studio.previewPreset(AuthService.current(), channel, level);
   }
 
   @PutMapping("/channels/{channel}/policy")

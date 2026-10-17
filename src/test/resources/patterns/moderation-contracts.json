@@ -1082,5 +1082,24 @@
       ],
       "allowLinks": true
     }
+  },
+  {
+    "id": "relaxed-flags-7-duration-3600",
+    "valid": true,
+    "policy": {
+      "level": "RELAXED",
+      "autoHide": true,
+      "autoMute": true,
+      "muteSeconds": 3600,
+      "reviewThreshold": 0.7,
+      "blockThreshold": 0.95,
+      "blockedWords": [
+        "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      ],
+      "blockedTopics": [
+        "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"
+      ],
+      "allowLinks": true
+    }
   }
 ]

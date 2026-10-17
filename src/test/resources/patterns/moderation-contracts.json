@@ -3013,5 +3013,24 @@
       "blockedTopics": [],
       "allowLinks": true
     }
+  },
+  {
+    "id": "strict-flags-4-duration-300",
+    "valid": true,
+    "policy": {
+      "level": "STRICT",
+      "autoHide": false,
+      "autoMute": false,
+      "muteSeconds": 300,
+      "reviewThreshold": 0.4,
+      "blockThreshold": 0.7,
+      "blockedWords": [
+        "restricted"
+      ],
+      "blockedTopics": [
+        "private"
+      ],
+      "allowLinks": true
+    }
   }
 ]

@@ -2,6 +2,12 @@
 
 API REST y WebSocket de StreamGuard, desarrollada en Java 21 con Spring Boot y PostgreSQL. Incluye migraciones Flyway, autenticación, transmisión, moderación asistida por IA y persistencia de clips.
 
+## Design patterns
+
+The backend implements Builder, Factory Method, Abstract Factory, Adapter, Bridge,
+Singleton, Prototype, Decorator and Facade. See [design-pattern evidence and workflows](docs/design-patterns.md)
+for production classes, policy template endpoints, authorization and verification.
+
 ## Ejecutar localmente
 
 Requiere Java 21 y Maven. Copia `.env.example` a `.env` y configura la conexión PostgreSQL y las variables que necesites. El perfil `cloud` usa `JDBC_DATABASE_URL`, `PGUSER` y `PGPASSWORD`. La sesión es un JWT (HS256) firmado con `JWT_SECRET` (mínimo 32 caracteres, por ejemplo `openssl rand -hex 32`); si falta, se usa uno aleatorio y cada reinicio cierra las sesiones. Dura 2 horas.

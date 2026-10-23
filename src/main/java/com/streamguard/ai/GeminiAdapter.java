@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.http.*;
 import java.time.Duration;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,7 @@ public class GeminiAdapter implements AiGateway {
   private final String key, model, fallbackModel;
   private final HttpClient client;
 
+  @Autowired
   public GeminiAdapter(
       ObjectMapper json,
       @Value("${app.gemini-key}") String key,

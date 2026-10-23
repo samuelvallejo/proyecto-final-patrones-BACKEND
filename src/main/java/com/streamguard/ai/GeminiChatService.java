@@ -96,9 +96,16 @@ public class GeminiChatService {
       throw error;
     } catch (GeminiAdapter.ProviderException error) {
       log.warn("Gemini chat request failed with HTTP {}", error.status());
-      throw new ApiError(
-          error.status() == 429 ? 429 : 502,
-          Messages.text(error.status() == 429 ? "geminiChatQuota" : "geminiChatFailed"));
+      int status = error.status();
+      String message =
+          switch (status) {
+            case 400 -> "geminiChatRequestInvalid";
+            case 401, 403 -> "geminiChatAccessFailed";
+            case 404 -> "geminiChatModelUnavailable";
+            case 429 -> "geminiChatQuota";
+            default -> "geminiChatFailed";
+          };
+      throw new ApiError(status == 429 ? 429 : 502, Messages.text(message));
     } catch (RuntimeException error) {
       log.warn("Gemini chat request failed; no conversation content recorded");
       throw new ApiError(502, Messages.text("geminiChatFailed"));

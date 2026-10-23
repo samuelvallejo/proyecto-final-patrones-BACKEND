@@ -38,7 +38,7 @@ app:
   media-work-dir: ${MEDIA_WORK_DIR:}
   media-storage: ${MEDIA_STORAGE:filesystem}
   gemini-key: ${GEMINI_API_KEY:}
-  gemini-model: ${GEMINI_MODEL:gemini-2.5-flash}
+  gemini-model: ${GEMINI_MODEL:gemini-3.8-flash}
   ai-provider: ${AI_PROVIDER:local-rules}
   ollama-url: ${OLLAMA_GATEWAY_URL:}
   ollama-token: ${OLLAMA_GATEWAY_TOKEN:}

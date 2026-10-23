@@ -109,5 +109,8 @@
   "geminiChatBusy": "El asistente está atendiendo otra pregunta. Inténtalo en unos segundos.",
   "geminiChatRateLimit": "Has enviado varias preguntas seguidas. Espera un minuto antes de continuar.",
   "geminiChatQuota": "Gemini alcanzó su límite de solicitudes. Inténtalo más tarde.",
+  "geminiChatRequestInvalid": "Gemini rechazó la solicitud. Inténtalo de nuevo; si continúa, contacta al administrador.",
+  "geminiChatAccessFailed": "No se pudo conectar con Gemini. El administrador debe revisar el acceso a la API.",
+  "geminiChatModelUnavailable": "El modelo de Gemini configurado no está disponible. Contacta al administrador.",
   "geminiChatFailed": "Gemini no pudo responder. Inténtalo de nuevo en unos momentos."
 }

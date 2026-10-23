@@ -45,7 +45,9 @@ public class GeminiAdapter implements AiGateway {
     if (!model.matches("[A-Za-z0-9._-]+")) throw new IllegalStateException("Invalid model");
     try {
       var generation = new HashMap<String, Object>();
-      generation.put("temperature", 0.1);
+      // Gemini 3 models no longer accept the legacy sampling controls.
+      if (!model.toLowerCase(Locale.ROOT).startsWith("gemini-3"))
+        generation.put("temperature", 0.1);
       generation.put("responseMimeType", "application/json");
       generation.put("responseSchema", schema);
       if (maxOutputTokens > 0) generation.put("maxOutputTokens", maxOutputTokens);

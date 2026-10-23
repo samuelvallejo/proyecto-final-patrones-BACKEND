@@ -39,6 +39,7 @@ app:
   media-storage: ${MEDIA_STORAGE:filesystem}
   gemini-key: ${GEMINI_API_KEY:}
   gemini-model: ${GEMINI_MODEL:gemini-3.8-flash}
+  gemini-fallback-model: ${GEMINI_FALLBACK_MODEL:gemini-3.6-flash}
   ai-provider: ${AI_PROVIDER:local-rules}
   ollama-url: ${OLLAMA_GATEWAY_URL:}
   ollama-token: ${OLLAMA_GATEWAY_TOKEN:}

@@ -8,10 +8,13 @@ per turn). Combined context cannot exceed 24000 characters. The response contain
 
 The chat uses `GeminiAdapter` independently of `AI_PROVIDER`. Moderation and editorial
 analysis continue using the selected provider. Configure `GEMINI_API_KEY` privately in Render;
-`GEMINI_MODEL` defaults to `gemini-3.8-flash`. The previous `gemini-2.5-flash` model is now
-available only to projects that have actively used it, so new integrations should select a
-current model. Configuration status means a key exists,
-not that Google has accepted it. A successful question verifies actual generation.
+`GEMINI_MODEL` defaults to `gemini-3.8-flash`, with `GEMINI_FALLBACK_MODEL` defaulting to
+`gemini-3.6-flash` for chat only. When the primary chat model is overloaded or times out, the
+chat tries the fallback and reports which model answered. Gemini 3 requests use low thinking for
+shorter conversational latency. The previous `gemini-2.5-flash` model is now available only to
+projects that have actively used it, so new integrations should select a current model.
+Configuration status means a key exists, not that Google has accepted it. A successful question
+verifies actual generation.
 
 The application never stores conversations in PostgreSQL and does not log questions,
 answers, provider response bodies or credentials. Google still receives the submitted context;
@@ -29,4 +32,5 @@ upgrade or account configuration action in this implementation.
 No system roles, platform data, channel records or tools are accepted from the browser.
 User-submitted history is untrusted context. There is no cross-user server conversation state.
 `GeminiChatServiceTest` covers session checks, validation, isolation, concurrency, quotas,
-malformed output and recovery without contacting Google.
+malformed output and recovery without contacting Google. `GeminiAdapterTest` verifies model fallback
+on provider overload and confirms invalid requests are not retried against another model.

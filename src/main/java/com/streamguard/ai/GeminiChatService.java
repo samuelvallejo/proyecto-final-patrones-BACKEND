@@ -79,19 +79,20 @@ public class GeminiChatService {
                   Map.of("answer", Map.of("type", "STRING")),
                   "required",
                   List.of("answer")));
-      JsonNode result =
-          gemini.generate(
+      GeminiAdapter.ChatGeneration generated =
+          gemini.generateChat(
               INSTRUCTION,
               json.valueToTree(
                   Map.of("message", question.message().strip(), "history", question.history())),
               schema,
               4096);
+      JsonNode result = generated.content();
       if (result == null
           || !result.path("answer").isTextual()
           || result.path("answer").asText().isBlank()
           || result.path("answer").asText().length() > 6000)
         throw new IllegalStateException("Invalid conversational answer");
-      return new Answer(result.path("answer").asText().strip(), "GEMINI", gemini.model());
+      return new Answer(result.path("answer").asText().strip(), "GEMINI", generated.model());
     } catch (ApiError error) {
       throw error;
     } catch (GeminiAdapter.ProviderException error) {
@@ -107,7 +108,8 @@ public class GeminiChatService {
           };
       throw new ApiError(status == 429 ? 429 : 502, Messages.text(message));
     } catch (RuntimeException error) {
-      log.warn("Gemini chat request failed; no conversation content recorded");
+      log.warn(
+          "Gemini chat request failed; failureType={}", error.getClass().getSimpleName());
       throw new ApiError(502, Messages.text("geminiChatFailed"));
     } finally {
       capacity.release();

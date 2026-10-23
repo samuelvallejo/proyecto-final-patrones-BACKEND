@@ -29,8 +29,10 @@ class GeminiChatServiceTest {
   private void available() {
     when(adapter.configured()).thenReturn(true);
     when(adapter.model()).thenReturn("gemini-2.5-flash");
-    when(adapter.generate(anyString(), any(), any(), eq(4096)))
-        .thenReturn(json.createObjectNode().put("answer", "A synthetic answer"));
+    when(adapter.generateChat(anyString(), any(), any(), eq(4096)))
+        .thenReturn(
+            new GeminiAdapter.ChatGeneration(
+                json.createObjectNode().put("answer", "A synthetic answer"), "gemini-2.5-flash"));
   }
 
   @Test
@@ -42,7 +44,7 @@ class GeminiChatServiceTest {
     assertEquals("gemini-2.5-flash", result.model());
     assertEquals("A synthetic answer", result.answer());
     verify(adapter)
-        .generate(
+        .generateChat(
             anyString(),
             argThat(
                 input ->
@@ -58,7 +60,7 @@ class GeminiChatServiceTest {
   void missingKeyDoesNotInventAnAnswer() {
     when(adapter.model()).thenReturn("gemini-2.5-flash");
     assertEquals(503, assertThrows(ApiError.class, () -> chat.reply(user, question)).status);
-    verify(adapter, never()).generate(anyString(), any(), any(), anyInt());
+    verify(adapter, never()).generateChat(anyString(), any(), any(), anyInt());
   }
 
   @Test
@@ -67,7 +69,7 @@ class GeminiChatServiceTest {
     for (int index = 0; index < 6; index++) chat.reply(user, question);
     assertEquals(429, assertThrows(ApiError.class, () -> chat.reply(user, question)).status);
     chat.reply(UUID.randomUUID(), question);
-    verify(adapter, times(7)).generate(anyString(), any(), any(), eq(4096));
+    verify(adapter, times(7)).generateChat(anyString(), any(), any(), eq(4096));
   }
 
   @Test
@@ -81,16 +83,18 @@ class GeminiChatServiceTest {
                 ApiError.class,
                 () -> chat.reply(user, new GeminiChatService.Question("More", turns)))
             .status);
-    verify(adapter, never()).generate(anyString(), any(), any(), anyInt());
+    verify(adapter, never()).generateChat(anyString(), any(), any(), anyInt());
   }
 
   @Test
   void quotaAndProviderFailuresArePrivateAndCapacityIsReleased() {
     available();
-    when(adapter.generate(anyString(), any(), any(), eq(4096)))
+    when(adapter.generateChat(anyString(), any(), any(), eq(4096)))
         .thenThrow(new GeminiAdapter.ProviderException(429))
         .thenThrow(new IllegalStateException("synthetic-private-key"))
-        .thenReturn(json.createObjectNode().put("answer", "Recovered"));
+        .thenReturn(
+            new GeminiAdapter.ChatGeneration(
+                json.createObjectNode().put("answer", "Recovered"), "gemini-3.6-flash"));
     assertEquals(429, assertThrows(ApiError.class, () -> chat.reply(user, question)).status);
     ApiError failure = assertThrows(ApiError.class, () -> chat.reply(user, question));
     assertEquals(502, failure.status);
@@ -101,8 +105,11 @@ class GeminiChatServiceTest {
   @Test
   void malformedProviderOutputIsNotExposed() {
     available();
-    when(adapter.generate(anyString(), any(), any(), eq(4096)))
-        .thenReturn(json.createObjectNode().put("internal", "synthetic-private-key"));
+    when(adapter.generateChat(anyString(), any(), any(), eq(4096)))
+        .thenReturn(
+            new GeminiAdapter.ChatGeneration(
+                json.createObjectNode().put("internal", "synthetic-private-key"),
+                "gemini-3.8-flash"));
     assertEquals(502, assertThrows(ApiError.class, () -> chat.reply(user, question)).status);
   }
 
@@ -111,12 +118,13 @@ class GeminiChatServiceTest {
     available();
     var entered = new CountDownLatch(1);
     var release = new CountDownLatch(1);
-    when(adapter.generate(anyString(), any(), any(), eq(4096)))
+    when(adapter.generateChat(anyString(), any(), any(), eq(4096)))
         .thenAnswer(
             call -> {
               entered.countDown();
               assertTrue(release.await(5, TimeUnit.SECONDS));
-              return json.createObjectNode().put("answer", "Finished");
+              return new GeminiAdapter.ChatGeneration(
+                  json.createObjectNode().put("answer", "Finished"), "gemini-3.8-flash");
             });
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var pending = executor.submit(() -> chat.reply(user, question));

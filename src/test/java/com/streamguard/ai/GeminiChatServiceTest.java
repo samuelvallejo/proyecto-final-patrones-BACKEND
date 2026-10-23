@@ -28,8 +28,8 @@ class GeminiChatServiceTest {
 
   private void available() {
     when(adapter.configured()).thenReturn(true);
-    when(adapter.model()).thenReturn("gemini-2.5-flash");
-    when(adapter.generateChat(anyString(), any(), any(), eq(4096)))
+    when(adapter.chatModel()).thenReturn("gemini-2.5-flash");
+    when(adapter.generateChat(anyString(), any(), eq(4096)))
         .thenReturn(
             new GeminiAdapter.ChatGeneration(
                 json.createObjectNode().put("answer", "A synthetic answer"), "gemini-2.5-flash"));
@@ -50,7 +50,6 @@ class GeminiChatServiceTest {
                 input ->
                     input.path("history").size() == 1
                         && input.path("message").asText().equals("Follow up")),
-            any(),
             eq(4096));
     assertEquals(3, chat.configuration().size());
     assertFalse(chat.configuration().containsKey("key"));
@@ -58,9 +57,9 @@ class GeminiChatServiceTest {
 
   @Test
   void missingKeyDoesNotInventAnAnswer() {
-    when(adapter.model()).thenReturn("gemini-2.5-flash");
+    when(adapter.chatModel()).thenReturn("gemini-2.5-flash");
     assertEquals(503, assertThrows(ApiError.class, () -> chat.reply(user, question)).status);
-    verify(adapter, never()).generateChat(anyString(), any(), any(), anyInt());
+    verify(adapter, never()).generateChat(anyString(), any(), anyInt());
   }
 
   @Test
@@ -69,7 +68,7 @@ class GeminiChatServiceTest {
     for (int index = 0; index < 6; index++) chat.reply(user, question);
     assertEquals(429, assertThrows(ApiError.class, () -> chat.reply(user, question)).status);
     chat.reply(UUID.randomUUID(), question);
-    verify(adapter, times(7)).generateChat(anyString(), any(), any(), eq(4096));
+    verify(adapter, times(7)).generateChat(anyString(), any(), eq(4096));
   }
 
   @Test
@@ -83,13 +82,13 @@ class GeminiChatServiceTest {
                 ApiError.class,
                 () -> chat.reply(user, new GeminiChatService.Question("More", turns)))
             .status);
-    verify(adapter, never()).generateChat(anyString(), any(), any(), anyInt());
+    verify(adapter, never()).generateChat(anyString(), any(), anyInt());
   }
 
   @Test
   void quotaAndProviderFailuresArePrivateAndCapacityIsReleased() {
     available();
-    when(adapter.generateChat(anyString(), any(), any(), eq(4096)))
+    when(adapter.generateChat(anyString(), any(), eq(4096)))
         .thenThrow(new GeminiAdapter.ProviderException(429))
         .thenThrow(new IllegalStateException("synthetic-private-key"))
         .thenReturn(
@@ -105,7 +104,7 @@ class GeminiChatServiceTest {
   @Test
   void malformedProviderOutputIsNotExposed() {
     available();
-    when(adapter.generateChat(anyString(), any(), any(), eq(4096)))
+    when(adapter.generateChat(anyString(), any(), eq(4096)))
         .thenReturn(
             new GeminiAdapter.ChatGeneration(
                 json.createObjectNode().put("internal", "synthetic-private-key"),
@@ -114,11 +113,24 @@ class GeminiChatServiceTest {
   }
 
   @Test
+  void longAnswersAreBoundedWithoutReplacingARealAnswerWithAnError() {
+    available();
+    when(adapter.generateChat(anyString(), any(), eq(4096)))
+        .thenReturn(new GeminiAdapter.ChatGeneration(
+            json.createObjectNode().put("answer", "a".repeat(5998) + "🎮" + "b".repeat(500)),
+            "gemini-2.5-flash-lite"));
+    String answer = chat.reply(user, question).answer();
+    assertTrue(answer.length() <= 6000);
+    assertTrue(answer.endsWith("…"));
+    assertFalse(Character.isHighSurrogate(answer.charAt(answer.length() - 2)));
+  }
+
+  @Test
   void oneConcurrentChatRequestKeepsInteractiveCapacityBounded() throws Exception {
     available();
     var entered = new CountDownLatch(1);
     var release = new CountDownLatch(1);
-    when(adapter.generateChat(anyString(), any(), any(), eq(4096)))
+    when(adapter.generateChat(anyString(), any(), eq(4096)))
         .thenAnswer(
             call -> {
               entered.countDown();

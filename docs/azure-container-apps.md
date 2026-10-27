@@ -15,6 +15,17 @@ so later pushes cannot change a running revision implicitly.
 
 ## Runtime configuration
 
+`deploy/azure/container-app.json` creates the environment and backend with these
+settings. Upload it using Azure portal's custom template deployment. The five
+credential parameters use `securestring` and become Container Apps secrets;
+they are not template outputs or plain environment values. Never put actual
+credential values in a committed parameters file.
+
+[Open the StreamGuard template in Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsamuelvallejo%2Fproyecto-final-patrones-BACKEND%2Fmain%2Fdeploy%2Fazure%2Fcontainer-app.json)
+
+Opening this link loads the public template and does not create any resources.
+Review the subscription, region, image digest and costs before submitting.
+
 - Use a Consumption workload profile with 0.5 vCPU and 1 GiB memory.
 - Use one active revision, a minimum of zero replicas and a maximum of one.
   Stream signaling and relay delivery keep process-local state; multiple replicas

@@ -22,9 +22,13 @@ La API local queda en http://localhost:8080. Para compilar el paquete ejecutable
 
 El `Dockerfile` compila y ejecuta el backend e incluye FFmpeg para procesar clips. Define los secretos de base de datos y del proveedor de IA en el entorno del servicio; no los guardes en el repositorio.
 
-## Publicación actual en Render
+The container publishing workflow builds `main` for GitHub Container Registry.
+See [Azure Container Apps deployment](docs/azure-container-apps.md) for runtime
+configuration, secrets, replica limits, costs and the migration checklist.
 
-El servicio gratuito `streamguard-backend` está conectado a la rama `codex/streamguard` del repositorio principal `Proyecto-final-patrones-de-software`. Actualmente los despliegues son manuales: después de trasladar la corrección a esa rama y subir el commit, selecciona **Manual Deploy → Deploy latest commit** en Render y espera **Deploy succeeded | Live**. Comprueba que el enlace **Source** corresponde al commit esperado. Subir cambios a este repositorio separado no actualiza por sí solo ese servicio.
+## Publicación y traslado a Azure
+
+El servicio `streamguard-backend` de Railway está conectado a `main` de este repositorio. El origen publicado es `https://streamguard-backend-production.up.railway.app`. Se está preparando el traslado a Azure Container Apps con la misma imagen Java y FFmpeg; la guía [Azure Container Apps deployment](docs/azure-container-apps.md) describe los requisitos antes de cambiar el tráfico del frontend.
 
 Una respuesta `UP` en `/actuator/health` confirma que el proceso está sano, pero no demuestra que ejecute la versión nueva. Para verificar el chat, envía un mensaje en una transmisión de prueba y comprueba su estado `VISIBLE`, su persistencia y la recepción por WebSocket. Las caídas del proveedor de IA deben guardar la respuesta de las reglas locales con el estado `LOCAL`, admitido por PostgreSQL.
 
@@ -36,7 +40,7 @@ Chrome en Android y Safari en iOS no admiten `getDisplayMedia`; el frontend info
 
 ## Secure workflows update (2026-10-09)
 
-See [secure workflows](docs/secure-workflows.md) for persistent encrypted HttpOnly sessions, local form limits, the light interface, optional location sharing and private profile recordings. The frontend API proxy must target the Render backend. Configure the private DATA_ENCRYPTION_KEY before deploying Flyway V7; retain the existing JWT_SECRET.
+See [secure workflows](docs/secure-workflows.md) for persistent encrypted HttpOnly sessions, local form limits, the light interface, optional location sharing and private profile recordings. The frontend API proxy must target the active backend. Configure the private DATA_ENCRYPTION_KEY before deploying Flyway V7; retain the existing JWT_SECRET during a migration to preserve existing sessions.
 
 ## Gemini chat
 

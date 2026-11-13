@@ -27,3 +27,11 @@ Independent 15-second recordings are uploaded to private storage and listed in t
 Generate a 32-byte random base64 `DATA_ENCRYPTION_KEY` and a strong stable `JWT_SECRET` outside Git. In production, store them as private Railway service variables. Keep PostgreSQL under the private `streamguard` schema and the existing backend role. V7 enables RLS on the recording table and indexes its stream/asset relationships. The API's server role owns the new table; frontend clients have no direct database access.
 
 Local verification on 2026-10-09: backend integration/unit tests, TypeScript strict compilation, localization checks, camera/lens tests and the new browser workflow test. Run `npm run test:workflows` with the backend and Vite running against a separate local database. It uses synthetic camera/microphone input and synthetic location coordinates, tests first-screen authentication, minimal responses, persistent HttpOnly cookies, WebRTC reception, floating preview, normal chat, profile recording replay, local numeric limits and mobile layout.
+
+## Sealed credentials (one-use tokens)
+
+Registration and login bodies never contain readable credentials. The browser first calls `POST /api/auth/challenge`, which returns a one-use token shaped `XXXXX-YYYYY-ZZZZZ` (15 characters from `A–Z`/`2–9` without `I`/`O`, about 75 bits), the server's RSA-2048 public key and a two-minute lifetime. The browser encrypts the form fields with a fresh AES-256-GCM key, using the token as additional authenticated data, encrypts that AES key with RSA-OAEP (SHA-256) and sends only `{token, key, iv, data}` to `/api/auth/register` or `/api/auth/login`.
+
+`CredentialEnvelope` consumes the token on first use, rejects unknown, expired, swapped or tampered envelopes with the generic authentication error, and then applies the same bean validation as before. Plain JSON credentials are rejected. The RSA key pair exists only in memory and changes on every restart, which only invalidates tokens that were not yet used. A captured request cannot be replayed and network logs, proxies or HAR exports never show the password or email.
+
+HTTPS still protects the transport. The person typing necessarily has the password in their own browser before it is encrypted; this design removes it from request bodies, not from the user's own device.

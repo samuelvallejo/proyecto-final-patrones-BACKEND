@@ -38,6 +38,7 @@ public class SecurityConfig {
                         "/actuator/health",
                         "/ws",
                         "/ws/media",
+                        "/api/auth/challenge",
                         "/api/auth/register",
                         "/api/auth/login")
                     .permitAll()

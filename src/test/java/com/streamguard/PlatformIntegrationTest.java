@@ -36,11 +36,20 @@ class PlatformIntegrationTest {
     return http.exchange("/api" + path, method, new HttpEntity<>(body, h), Map.class);
   }
 
+  /** Sends login/registration fields the way the browser does: sealed under a one-use token. */
+  private ResponseEntity<Map> sealed(String path, Map<String, ?> fields) {
+    Map challenge = call(HttpMethod.POST, "/auth/challenge", Map.of(), null).getBody();
+    String token = challenge.get("token").toString();
+    assertTrue(token.matches("[A-Z2-9]{5}-[A-Z2-9]{5}-[A-Z2-9]{5}"), token);
+    var body = SealedCredentials.seal(token, challenge.get("publicKey").toString(), fields);
+    assertFalse(body.toString().contains("TestPassword123!"));
+    return call(HttpMethod.POST, path, body, null);
+  }
+
   private User user() {
     String n = "u" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
     var res =
-        call(
-            HttpMethod.POST,
+        sealed(
             "/auth/register",
             Map.of(
                 "username",
@@ -50,8 +59,7 @@ class PlatformIntegrationTest {
                 "password",
                 "TestPassword123!",
                 "aiConsent",
-                true),
-            null);
+                true));
     assertEquals(200, res.getStatusCode().value());
     assertEquals(Map.of("ok", true), res.getBody());
     String cookie=res.getHeaders().getFirst("Set-Cookie");
@@ -248,8 +256,7 @@ class PlatformIntegrationTest {
   void authenticationRequiresConsentAndRejectsWrongPassword() {
     assertEquals(
         400,
-        call(
-                HttpMethod.POST,
+        sealed(
                 "/auth/register",
                 Map.of(
                     "username",
@@ -259,18 +266,13 @@ class PlatformIntegrationTest {
                     "password",
                     "TestPassword123!",
                     "aiConsent",
-                    false),
-                null)
+                    false))
             .getStatusCode()
             .value());
     User u = user();
     assertEquals(
         401,
-        call(
-                HttpMethod.POST,
-                "/auth/login",
-                Map.of("email", u.username() + "@gmail.com", "password", "wrong-password"),
-                null)
+        sealed("/auth/login", Map.of("email", u.username() + "@gmail.com", "password", "wrong-password"))
             .getStatusCode()
             .value());
     assertEquals(200, call(HttpMethod.GET, "/users/me", null, u.token()).getStatusCode().value());
@@ -287,8 +289,10 @@ class PlatformIntegrationTest {
     assertFalse(row.get("email_encrypted").toString().contains("gmail.com"));
     assertNotEquals("TestPassword123!",row.get("password_hash"));
     assertEquals(64,row.get("email_lookup").toString().length());
-    var logged=call(HttpMethod.POST,"/auth/login",Map.of("email",u.username()+"@gmail.com","password","TestPassword123!"),null);
+    var logged=sealed("/auth/login",Map.of("email",u.username()+"@gmail.com","password","TestPassword123!"));
     assertEquals(Map.of("ok",true),logged.getBody());
+    // Plain JSON credentials are no longer accepted.
+    assertEquals(400,call(HttpMethod.POST,"/auth/login",Map.of("email",u.username()+"@gmail.com","password","TestPassword123!"),null).getStatusCode().value());
     assertEquals(401,call(HttpMethod.GET,"/config",null,null).getStatusCode().value());
     var cookieHeaders=new HttpHeaders();cookieHeaders.set("Cookie",u.token());cookieHeaders.set("Origin","https://untrusted.example");
     assertEquals(403,http.exchange("/api/auth/logout",HttpMethod.POST,new HttpEntity<>(Map.of(),cookieHeaders),Map.class).getStatusCode().value());

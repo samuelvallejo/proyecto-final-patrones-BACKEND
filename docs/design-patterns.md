@@ -23,7 +23,7 @@ The initialization-on-demand holder guarantees thread-safe lazy initialization w
 locking every access. The shared client uses HTTP/1.1 and an eight-second connection
 timeout; each adapter retains its own request timeout, credentials and serialization.
 Credentials, headers, user sessions and moderation policies are never stored in the singleton.
-The instance is shared within one JVM, not across separate Render containers.
+The instance is shared within one JVM, not across separate Azure Container Apps replicas.
 
 ## Prototype: independent moderation policies
 

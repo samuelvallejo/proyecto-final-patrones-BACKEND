@@ -6,6 +6,6 @@ Both the studio and public watch view show the room's live perspectives in indep
 
 The primary source stays in the same player when a group becomes active or ends. Stream-end handling closes rooms and removes membership, including host heartbeats and connection expiry. Invitations to ended primary streams are rejected even if housekeeping has not run yet. New group creation also clears stale memberships left by older deployments.
 
-Flyway migration V6 installs the collaboration tables in the backend's configured schema. The production schema is `streamguard`, which is not exposed through the Supabase Data API. Deploy the Java backend before publishing a frontend that calls collaboration endpoints. The Render service uses manual deployment from `codex/streamguard`; pushing only to a split repository is insufficient.
+Flyway migration V6 installs the collaboration tables in the backend's configured schema. The production schema is `streamguard`, which is not exposed through the Supabase Data API. Deploy the Java backend before publishing a frontend that calls collaboration endpoints. Pushing to `main` publishes a new container image; deploy that image as a new Azure Container Apps revision.
 
 Validation includes media/lens regression tests, real PostgreSQL HTTP integration tests for ownership, live-stream requirements, invitation lifecycle and four-member capacity, and browser playback of two synthetic independent streams. Real mobile hardware and phone-screen broadcasting remain separate from these simulated camera checks.

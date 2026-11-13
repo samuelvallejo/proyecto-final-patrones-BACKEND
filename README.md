@@ -26,9 +26,9 @@ The container publishing workflow builds `main` for GitHub Container Registry.
 See [Azure Container Apps deployment](docs/azure-container-apps.md) for runtime
 configuration, secrets, replica limits, costs and the migration checklist.
 
-## Publicación y traslado a Azure
+## Publicación en Azure
 
-El servicio `streamguard-backend` de Railway está conectado a `main` de este repositorio. El origen publicado es `https://streamguard-backend-production.up.railway.app`. Se está preparando el traslado a Azure Container Apps con la misma imagen Java y FFmpeg; la guía [Azure Container Apps deployment](docs/azure-container-apps.md) describe los requisitos antes de cambiar el tráfico del frontend.
+El backend se ejecuta en Azure Container Apps (`streamguard-backend`, grupo de recursos `rg-streamguard`) con la imagen publicada en GitHub Container Registry. El despliegue crea también la base de datos Azure Database for PostgreSQL; el origen público del backend aparece como salida `backendOrigin` del despliegue. La guía [Azure Container Apps deployment](docs/azure-container-apps.md) describe la configuración, los secretos y cómo publicar una revisión nueva.
 
 Una respuesta `UP` en `/actuator/health` confirma que el proceso está sano, pero no demuestra que ejecute la versión nueva. Para verificar el chat, envía un mensaje en una transmisión de prueba y comprueba su estado `VISIBLE`, su persistencia y la recepción por WebSocket. Las caídas del proveedor de IA deben guardar la respuesta de las reglas locales con el estado `LOCAL`, admitido por PostgreSQL.
 

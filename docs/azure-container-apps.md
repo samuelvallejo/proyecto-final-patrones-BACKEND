@@ -15,11 +15,23 @@ so later pushes cannot change a running revision implicitly.
 
 ## Runtime configuration
 
-`deploy/azure/container-app.json` creates the environment and backend with these
-settings. Upload it using Azure portal's custom template deployment. The five
-credential parameters use `securestring` and become Container Apps secrets;
-they are not template outputs or plain environment values. Never put actual
-credential values in a committed parameters file.
+`deploy/azure/container-app.json` creates the PostgreSQL database, the Container
+Apps environment and the backend with these settings. Upload it using Azure
+portal's custom template deployment. The three credential parameters
+(`databasePassword`, `dataEncryptionKey`, `jwtSecret`) use `securestring` and
+become Container Apps secrets; they are not template outputs or plain
+environment values. Never put actual credential values in a committed
+parameters file.
+
+## Database
+
+The template creates an Azure Database for PostgreSQL flexible server (PostgreSQL
+16, Burstable `Standard_B1ms`, 32 GB, 7-day backups, no high availability) with a
+`streamguard` database. Its firewall allows only Azure services (`0.0.0.0`
+rule), so the backend connects over TLS (`sslmode=require`) and the database is
+not open to the internet. The backend receives the JDBC URL and administrator
+login automatically. `SPRING_FLYWAY_CREATE_SCHEMAS=true` lets Flyway create the
+private `streamguard` schema and run every migration on the first start.
 
 [Open the StreamGuard template in Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsamuelvallejo%2Fproyecto-final-patrones-BACKEND%2Fmain%2Fdeploy%2Fazure%2Fcontainer-app.json)
 
@@ -38,10 +50,10 @@ Review the subscription, region, image digest and costs before submitting.
   `MEDIA_DIR=/tmp/streamguard-media`, `MEDIA_WORK_DIR=/tmp/streamguard-work`,
   `PORT=8080` and `MAX_VIEWERS=6`.
 - Set `FRONTEND_ORIGIN` to the exact production Vercel origin.
-- Store `JDBC_DATABASE_URL`, `PGUSER`, `PGPASSWORD`, `DATA_ENCRYPTION_KEY` and
-  `JWT_SECRET` as private Azure secrets and reference them from environment
-  variables. Preserve the encryption key to read existing protected database
-  fields. Preserve the JWT secret when moving existing sessions.
+- `JDBC_DATABASE_URL`, `PGPASSWORD`, `DATA_ENCRYPTION_KEY` and `JWT_SECRET` are
+  private Azure secrets referenced from environment variables. Keep a private
+  backup of the encryption key: losing it makes protected database fields
+  unreadable. Changing the JWT secret closes existing sessions.
 - Configure Gemini or Ollama credentials only as private runtime secrets when
   their values are available. `AI_PROVIDER=local-rules` works without an external
   model and does not provide Gemini chat responses.
@@ -56,9 +68,9 @@ Avoid creating a dedicated workload profile, registry or logging workspace
 unless it is specifically needed and its cost has been reviewed.
 
 Create and check the Azure backend before changing the frontend. Then update the
-Vercel API proxy and public backend origin, publish a new frontend build, and
-stop the previous backend once the cutover is verified. Two active backend
-instances against the same database are not a supported streaming deployment.
+Vercel API proxy and public backend origin and publish a new frontend build. Two
+active backend instances against the same database are not a supported
+streaming deployment.
 
 ## Verification
 

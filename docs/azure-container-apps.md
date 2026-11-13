@@ -38,6 +38,12 @@ private `streamguard` schema and run every migration on the first start.
 Opening this link loads the public template and does not create any resources.
 Review the subscription, region, image digest and costs before submitting.
 
+- The Azure for Students subscription only allows `francecentral`, `westus`,
+  `spaincentral`, `chilecentral` and `belgiumcentral`. Production uses
+  `chilecentral` (closest to Colombia): choose West US as the resource group
+  region and type `chilecentral` in the Location parameter.
+- Container App logs are not sent to Log Analytics (no `appLogsConfiguration`),
+  which avoids a paid logging workspace.
 - Use a Consumption workload profile with 0.5 vCPU and 1 GiB memory.
 - Use one active revision, a minimum of zero replicas and a maximum of one.
   Stream signaling and relay delivery keep process-local state; multiple replicas

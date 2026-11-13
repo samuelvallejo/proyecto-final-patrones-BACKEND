@@ -7,7 +7,7 @@ per turn). Combined context cannot exceed 24000 characters. The response contain
 `answer`, `provider` and `model`.
 
 The chat uses `GeminiAdapter` independently of `AI_PROVIDER`. Moderation and editorial
-analysis continue using the selected provider. Configure `GEMINI_API_KEY` privately as an Azure Container Apps secret;
+analysis continue using the selected provider. Configure `GEMINI_API_KEY` privately as a Railway service variable;
 The chat discovers available Flash text models using Google's `models.list` endpoint, caches the
 catalog for ten minutes, prefers Flash Lite models, and remembers the model that actually answered.
 `GEMINI_MODEL` and `GEMINI_FALLBACK_MODEL` remain fallback choices if discovery is unavailable.

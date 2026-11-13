@@ -14,6 +14,13 @@
       "type": "string",
       "defaultValue": "streamguard-env"
     },
+    "environmentResourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Resource group of the Container Apps environment. Use another group to reuse an existing environment instead of creating one (Azure for Students allows only one per subscription)."
+      }
+    },
     "image": {
       "type": "string",
       "defaultValue": "ghcr.io/samuelvallejo/streamguard-backend@sha256:2a9c16ef3aa6f948510a988ec7ecb34624d2e2f11471a1c633f78c18cfff00a2",
@@ -131,7 +138,8 @@
             "workloadProfileType": "Consumption"
           }
         ]
-      }
+      },
+      "condition": "[equals(parameters('environmentResourceGroup'), resourceGroup().name)]"
     },
     {
       "type": "Microsoft.App/containerApps",
@@ -147,7 +155,7 @@
         "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/databases', parameters('databaseServerName'), 'streamguard')]"
       ],
       "properties": {
-        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]",
+        "managedEnvironmentId": "[resourceId(parameters('environmentResourceGroup'), 'Microsoft.App/managedEnvironments', parameters('environmentName'))]",
         "workloadProfileName": "Consumption",
         "configuration": {
           "activeRevisionsMode": "Single",

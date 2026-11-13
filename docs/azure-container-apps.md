@@ -39,9 +39,13 @@ Opening this link loads the public template and does not create any resources.
 Review the subscription, region, image digest and costs before submitting.
 
 - The Azure for Students subscription only allows `francecentral`, `westus`,
-  `spaincentral`, `chilecentral` and `belgiumcentral`. Production uses
-  `chilecentral` (closest to Colombia): choose West US as the resource group
-  region and type `chilecentral` in the Location parameter.
+  `spaincentral`, `chilecentral` and `belgiumcentral`. The Container App
+  must use the region of its environment, so production runs in `westus`.
+- Azure for Students allows only one Container Apps environment per
+  subscription. Production reuses the existing `bachescanai-env` (West US,
+  workload profile `Consumption`) by setting `environmentName=bachescanai-env`,
+  `environmentResourceGroup=rg-bachescan-ai` and `location=westus`; the
+  template then creates only the database and the `streamguard-backend` app.
 - Container App logs are not sent to Log Analytics (no `appLogsConfiguration`),
   which avoids a paid logging workspace.
 - Use a Consumption workload profile with 0.5 vCPU and 1 GiB memory.

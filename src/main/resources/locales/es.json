@@ -112,5 +112,10 @@
   "geminiChatRequestInvalid": "Gemini rechazó la solicitud. Inténtalo de nuevo; si continúa, contacta al administrador.",
   "geminiChatAccessFailed": "No se pudo conectar con Gemini. El administrador debe revisar el acceso a la API.",
   "geminiChatModelUnavailable": "El modelo de Gemini configurado no está disponible. Contacta al administrador.",
-  "geminiChatFailed": "Gemini no pudo responder. Inténtalo de nuevo en unos momentos."
+  "geminiChatFailed": "Gemini no pudo responder. Inténtalo de nuevo en unos momentos.",
+  "eventChannelRequired": "Crea tu canal antes de programar un evento.",
+  "eventInvalidTime": "Elige una fecha futura dentro del próximo año.",
+  "eventLimit": "Tu canal ya tiene el máximo de eventos programados.",
+  "eventInvalidCategory": "La categoría elegida no existe.",
+  "eventNotFound": "No encontramos ese evento en tu canal."
 }

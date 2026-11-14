@@ -114,7 +114,7 @@ public class PlatformService {
   public List<Map<String, Object>> explore(String search, String category) {
     var rows =
         db.list(
-            "SELECT s.id,s.title,s.status,s.started_at,c.name AS"
+            "SELECT s.id,s.title,s.status,s.started_at,c.id AS channel_id,c.name AS"
                 + " channel_name,c.slug,p.display_name,cat.name AS category FROM streams s JOIN"
                 + " channels c ON c.id=s.channel_id JOIN user_profiles p ON p.user_id=c.owner_id"
                 + " LEFT JOIN categories cat ON cat.id=s.category_id WHERE s.status='LIVE' AND"

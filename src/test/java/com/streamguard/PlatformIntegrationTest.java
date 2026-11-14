@@ -299,6 +299,33 @@ class PlatformIntegrationTest {
   }
 
   @Test
+  void upcomingEventsAndDiscoveryListsRespectOwnership() {
+    User owner = user(), other = user(), stranger = user();
+    assertEquals(409, call(HttpMethod.POST, "/events", Map.of("title", "Sin canal", "startsAt", java.time.OffsetDateTime.now().plusDays(1).toString()), stranger.token()).getStatusCode().value());
+    String channel = channel(owner);
+    assertEquals(400, call(HttpMethod.POST, "/events", Map.of("title", "Pasado", "startsAt", java.time.OffsetDateTime.now().minusDays(1).toString()), owner.token()).getStatusCode().value());
+    var created = call(HttpMethod.POST, "/events", Map.of("title", "Torneo de prueba", "startsAt", java.time.OffsetDateTime.now().plusHours(3).toString()), owner.token());
+    assertEquals(200, created.getStatusCode().value());
+    String event = created.getBody().get("id").toString();
+    List<Map> upcoming = http.exchange("/api/events/upcoming", HttpMethod.GET, new HttpEntity<>(cookies(other)), List.class).getBody();
+    assertTrue(upcoming.stream().anyMatch(e -> event.equals(e.get("id")) && Boolean.FALSE.equals(e.get("mine"))));
+    assertEquals(404, call(HttpMethod.DELETE, "/events/" + event, null, other.token()).getStatusCode().value());
+    assertEquals(200, call(HttpMethod.POST, "/channels/" + channel + "/follow", Map.of(), other.token()).getStatusCode().value());
+    List<Map> following = http.exchange("/api/discover/following", HttpMethod.GET, new HttpEntity<>(cookies(other)), List.class).getBody();
+    assertTrue(following.stream().anyMatch(c -> channel.equals(c.get("channel_id"))));
+    List<Map> featured = http.exchange("/api/discover/featured", HttpMethod.GET, new HttpEntity<>(cookies(other)), List.class).getBody();
+    assertTrue(featured.stream().anyMatch(c -> channel.equals(c.get("channel_id")) && Boolean.TRUE.equals(c.get("following"))));
+    List<Map> categories = http.exchange("/api/discover/categories", HttpMethod.GET, new HttpEntity<>(cookies(other)), List.class).getBody();
+    assertFalse(categories.isEmpty()); assertTrue(categories.get(0).containsKey("live_streams"));
+    assertEquals(200, call(HttpMethod.DELETE, "/events/" + event, null, owner.token()).getStatusCode().value());
+    assertEquals(401, call(HttpMethod.GET, "/events/upcoming", null, null).getStatusCode().value());
+  }
+
+  private HttpHeaders cookies(User u) {
+    HttpHeaders h = new HttpHeaders(); h.set("Cookie", u.token()); return h;
+  }
+
+  @Test
   void channelLinksAreGeneratedAndLocationsRequireOwnership() {
     User owner=user(), stranger=user();
     var channel=call(HttpMethod.POST,"/channels",Map.of("name","New channel","description",""),owner.token());

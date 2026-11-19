@@ -10,6 +10,9 @@ server:
     include-binding-errors: never
     include-exception: false
 spring:
+  main:
+    # Beans are created on first use: the sleeping free host answers sooner after waking up.
+    lazy-initialization: true
   datasource:
     url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/streamguard}
     username: ${PGUSER:streamguard}

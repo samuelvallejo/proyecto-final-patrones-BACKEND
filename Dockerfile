@@ -15,7 +15,7 @@ COPY --from=build /workspace/target/backend-1.0.0.jar /app/backend.jar
 # run needs no database or real secrets; it uses a throwaway all-zero encryption key.
 RUN java -Djarmode=tools -jar backend.jar extract --destination application \
  && (java -XX:ArchiveClassesAtExit=application.jsa -Dspring.context.exit=onRefresh \
-      -Dspring.flyway.enabled=false -Dapp.media-dir=/tmp/cds-media \
+      -Dspring.flyway.enabled=false -Dspring.main.lazy-initialization=false -Dapp.media-dir=/tmp/cds-media \
       -Dapp.data-encryption-key=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
       -jar application/backend.jar > /tmp/cds-training.log 2>&1 || echo "CDS training skipped") \
  && rm -rf backend.jar /tmp/cds-media

@@ -321,6 +321,19 @@ class PlatformIntegrationTest {
     assertEquals(401, call(HttpMethod.GET, "/events/upcoming", null, null).getStatusCode().value());
   }
 
+  @Test
+  void bootstrapReturnsStartupDataInOneCallAndPingIsPublic() {
+    assertEquals(Map.of("ok", true), call(HttpMethod.GET, "/ping", null, null).getBody());
+    assertEquals(401, call(HttpMethod.GET, "/bootstrap", null, null).getStatusCode().value());
+    User u = user();
+    Map body = call(HttpMethod.GET, "/bootstrap", null, u.token()).getBody();
+    assertEquals(u.id(), ((Map) body.get("user")).get("id"));
+    assertFalse(((Map) body.get("user")).containsKey("email"));
+    assertTrue(((Map) body.get("config")).containsKey("iceServers"));
+    assertFalse(((List) body.get("categories")).isEmpty());
+    assertTrue(body.get("following") instanceof List);
+  }
+
   private HttpHeaders cookies(User u) {
     HttpHeaders h = new HttpHeaders(); h.set("Cookie", u.token()); return h;
   }

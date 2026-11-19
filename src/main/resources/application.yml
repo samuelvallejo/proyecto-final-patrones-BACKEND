@@ -1,5 +1,9 @@
 server:
   port: ${PORT:8080}
+  compression:
+    enabled: true
+    mime-types: application/json,text/plain
+    min-response-size: 1024
   error:
     include-message: never
     include-stacktrace: never

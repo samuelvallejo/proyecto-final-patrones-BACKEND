@@ -279,9 +279,14 @@ public class MediaService {
     var row =
         db.one(
             "SELECT a.storage_key,a.owner_id,EXISTS(SELECT 1 FROM clips c WHERE c.asset_id=a.id AND"
-                + " c.status='APPROVED') AS published FROM media_assets a WHERE a.id=?",
+                + " c.status='APPROVED' AND c.removed_at IS NULL) AS published,EXISTS(SELECT 1 FROM user_roles ur"
+                + " JOIN roles r ON r.id=ur.role_id WHERE ur.user_id=? AND r.name='ADMIN') AS admin"
+                + " FROM media_assets a WHERE a.id=?",
+            user,
             asset);
-    if (!Objects.equals(row.get("owner_id"), user) && !(boolean) row.get("published"))
+    // Administrators may review any video, including clips that were taken down.
+    if (!Objects.equals(row.get("owner_id"), user) && !(boolean) row.get("published")
+        && !(boolean) row.get("admin"))
       throw new ApiError(403, Messages.text("mediaServiceAuthorizedText08"));
     Path p;
     try { p = materialize(row.get("storage_key").toString()); }

@@ -130,5 +130,9 @@
   "adminCategoryExists": "Ya existe una categoría con ese nombre.",
   "announcementTitle": "Anuncio de StreamGuard",
   "maintenanceActive": "StreamGuard está en mantenimiento. Vuelve a intentarlo más tarde.",
-  "registrationClosed": "El registro de cuentas nuevas está cerrado por ahora."
+  "registrationClosed": "El registro de cuentas nuevas está cerrado por ahora.",
+  "adminInvalidContent": "Tipo o estado de contenido no válido",
+  "adminAlreadyRemoved": "Ese contenido ya está dado de baja",
+  "adminNotRemoved": "Ese contenido no está dado de baja",
+  "adminInvalidAiRules": "El límite de la IA debe estar entre 0 y 100000 solicitudes por hora"
 }

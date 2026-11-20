@@ -1,10 +1,11 @@
 # Design patterns in StreamGuard
 
-The Java backend implements nine design patterns. The original Builder, Factory Method,
+The Java backend implements ten design patterns. The original Builder, Factory Method,
 Abstract Factory, Adapter and Bridge remain in use. Singleton, Prototype, Decorator and
-Facade extend those workflows without changing the PostgreSQL schema.
+Facade extend those workflows without changing the PostgreSQL schema. Proxy controls access to the
+AI provider and to content moderation.
 
-All nine are written by hand in plain Java: the classes in `patterns/` import nothing from Spring
+All ten are written by hand in plain Java: the classes in `patterns/` import nothing from Spring
 and are created with `new` in `PatternAssembly`, a hand-written assembly class. Spring only creates
 the application services (controllers, repositories and services) that use them.
 `PatternAssemblyTest` fails if a Spring import or annotation appears in that package.
@@ -20,6 +21,33 @@ the application services (controllers, repositories and services) that use them.
 | Prototype | `Prototype<T>`, `ModerationPolicy`, `ModerationPresets` | Copy a policy template before customization. |
 | Decorator | `ModerationAnalyzerDecorator` and concrete decorators | Compose local restrictions, capacity limits and failure recovery. |
 | Facade | `CreatorStudioFacade` | Coordinate authorized dashboard reads, preset previews and public AI capabilities. |
+| Proxy | `AiGatewayProxy`, `AdminAuditProxy` | Control access to the AI provider and to the admin content operations. |
+
+## Proxy: controlled access to the AI provider and to content moderation
+
+Two proxies stand in front of a real object with the same interface, so callers cannot tell them
+apart from the object itself.
+
+**`AiGatewayProxy` (protection proxy).** It implements `AiGateway`, like `OllamaAdapter` and
+`GeminiAdapter`. `PatternAssembly.aiGateway` creates one per `AiService` around the configured
+adapter, and `AiService` passes it to the Abstract Factory toolkits, so no external AI call
+bypasses it. Before forwarding, it checks two rules that administrators set in
+`platform_settings` (`ai_enabled`, `ai_hourly_limit`, sliding one-hour window). A refused call
+throws `AccessDenied`; the existing fallback decorator and editorial fallback answer with local
+rules, exactly as when the provider is down. `stats()` reports forwarded and refused calls.
+
+**`AdminAuditProxy` (dynamic protection + audit proxy).** A `java.lang.reflect.Proxy` over the
+`ContentModeration` interface. `ContentModerationController` only receives the proxy, built in
+`PatternAssembly.contentModeration`. Each call checks the administrator role with
+`RoleService.isAdmin`; methods annotated `@Audited` run in one transaction with an `audit_logs`
+row in the panel's format (`ADMIN_TAKEDOWN`, `ADMIN_RESTORE`, `ADMIN_AI_RULES` and a label), so
+they also appear in the panel's activity log. `ContentModerationService` contains neither check.
+The transaction is passed in as a function, so the proxy imports nothing from Spring.
+
+Takedown is logical: `removed_at`, `removed_by` and `removed_reason` hide a stream or clip from
+public lists, explore, stream pages and media access; the owner and administrators still see it
+and it can be restored. Difference with Decorator: a decorator adds behavior around a call that
+always happens; these proxies decide whether the real object is reached at all.
 
 ## Singleton: shared AI transport
 

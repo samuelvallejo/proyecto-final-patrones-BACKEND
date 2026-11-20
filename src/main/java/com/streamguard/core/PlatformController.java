@@ -233,7 +233,11 @@ public class PlatformController {
 
   @GetMapping("/streams/{stream}")
   public Map<?, ?> stream(@PathVariable UUID stream) {
-    return platform.stream(stream);
+    var row = platform.stream(stream);
+    // A stream taken down by an administrator stays visible only to its owner.
+    if (row.get("removed_at") != null && !Objects.equals(row.get("owner_id"), AuthService.current()))
+      throw new ApiError(404, Messages.text("dbOneText01"));
+    return row;
   }
 
   @PostMapping("/streams/{stream}/end")
@@ -300,8 +304,8 @@ public class PlatformController {
   public List<?> publicClips() {
     return db.list(
         "SELECT c.*,ch.name AS channel_name,ch.slug FROM clips c JOIN streams s ON s.id=c.stream_id"
-            + " JOIN channels ch ON ch.id=s.channel_id WHERE c.status='APPROVED' ORDER BY"
-            + " c.created_at DESC LIMIT 50");
+            + " JOIN channels ch ON ch.id=s.channel_id WHERE c.status='APPROVED' AND"
+            + " c.removed_at IS NULL AND s.removed_at IS NULL ORDER BY c.created_at DESC LIMIT 50");
   }
 
   @GetMapping("/media/{asset}")

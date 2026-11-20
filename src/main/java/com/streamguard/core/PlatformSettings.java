@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
  * refreshed immediately when an administrator changes them.
  */
 @Service
-public class PlatformSettings {
+public class PlatformSettings implements com.streamguard.patterns.AiGatewayProxy.AccessRules {
   private static final long CACHE_MILLIS = 15000;
   private final Db db;
   private volatile Map<String, String> cache;
@@ -42,6 +42,22 @@ public class PlatformSettings {
 
   public boolean registrationOpen() {
     return !"false".equals(values().get("registration_open"));
+  }
+
+  /** Rule read by the AI gateway proxy: whether any request may reach the AI provider. */
+  @Override
+  public boolean enabled() {
+    return !"false".equals(values().get("ai_enabled"));
+  }
+
+  /** Rule read by the AI gateway proxy: provider requests allowed per hour. */
+  @Override
+  public int hourlyLimit() {
+    try {
+      return Math.max(0, Integer.parseInt(values().getOrDefault("ai_hourly_limit", "600")));
+    } catch (NumberFormatException e) {
+      return 600;
+    }
   }
 
   /** The active announcement, or null when there is none. */

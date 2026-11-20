@@ -25,13 +25,16 @@ public class AuthService {
   private final PasswordHasher passwords;
   private final TokenGenerator tokens;
   private final RoleService roles;
+  private final com.streamguard.core.PlatformSettings platform;
 
   public AuthService(
       UserRepository users,
       SessionRepository sessions,
       PasswordHasher passwords,
       TokenGenerator tokens,
-      RoleService roles) {
+      RoleService roles,
+      com.streamguard.core.PlatformSettings platform) {
+    this.platform = platform;
     this.roles = roles;
     this.users = users;
     this.sessions = sessions;
@@ -73,6 +76,10 @@ public class AuthService {
 
   @Transactional
   public Map<String, Object> register(String username, String email, String password) {
+    if (platform.maintenance())
+      throw new ApiError(503, Messages.text("maintenanceActive"), "MAINTENANCE");
+    if (!platform.registrationOpen())
+      throw new ApiError(403, Messages.text("registrationClosed"), "REGISTRATION_CLOSED");
     if (passwords.isTooLong(password))
       throw new ApiError(400, Messages.text("authServiceRegisterText02"));
     UUID id = users.createAccount(username, email, passwords.encode(password));
@@ -85,7 +92,11 @@ public class AuthService {
     var user = users.findActiveByEmail(email);
     if (user.isEmpty() || !passwords.matches(password, user.get().get("password_hash").toString()))
       throw new ApiError(401, Messages.text("authServiceLoginText03"));
-    return openSession(Db.id(user.get().get("id")));
+    UUID id = Db.id(user.get().get("id"));
+    // Checked after the password, so the answer never reveals which accounts are administrators.
+    if (platform.maintenance() && !roles.isAdmin(id))
+      throw new ApiError(503, Messages.text("maintenanceActive"), "MAINTENANCE");
+    return openSession(id);
   }
 
   /** The profile plus its role: ADMIN for administrators, USER for everyone else. */

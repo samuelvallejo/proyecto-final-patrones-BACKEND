@@ -390,6 +390,46 @@ class PlatformIntegrationTest {
     assertTrue(actions.stream().anyMatch(a -> "ADMIN_SUSPEND".equals(a.get("action"))));
   }
 
+  /** Logs in through the sealed envelope and returns the HTTP status. */
+  private int login(User u) {
+    return sealed("/auth/login", Map.of("email", u.username() + "@gmail.com", "password", "TestPassword123!")).getStatusCode().value();
+  }
+
+  @Test
+  void maintenanceLetsOnlyAdministratorsInAndRegistrationCanBeClosed() {
+    User regular = user(), admin = user();
+    db.exec("INSERT INTO user_roles(user_id,role_id) SELECT ?::uuid,id FROM roles WHERE name='ADMIN'", admin.id());
+    assertEquals(403, call(HttpMethod.PUT, "/admin/platform", Map.of("maintenance", true, "registrationOpen", true), regular.token()).getStatusCode().value());
+    try {
+      assertEquals(200, call(HttpMethod.PUT, "/admin/platform", Map.of("maintenance", true, "registrationOpen", true), admin.token()).getStatusCode().value());
+      assertEquals(true, call(HttpMethod.GET, "/platform/status", null, null).getBody().get("maintenance"));
+      var blocked = call(HttpMethod.GET, "/bootstrap", null, regular.token());
+      assertEquals(503, blocked.getStatusCode().value());
+      assertEquals("MAINTENANCE", blocked.getBody().get("code"));
+      assertEquals(200, call(HttpMethod.GET, "/bootstrap", null, admin.token()).getStatusCode().value());
+      assertEquals(200, call(HttpMethod.GET, "/ping", null, null).getStatusCode().value());
+      assertEquals(503, login(regular));
+      assertEquals(200, login(admin));
+      String n = "m" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+      var refused = sealed("/auth/register", Map.of("username", n, "email", n + "@gmail.com", "password", "TestPassword123!", "aiConsent", true));
+      assertEquals(503, refused.getStatusCode().value());
+      assertEquals("MAINTENANCE", refused.getBody().get("code"));
+
+      assertEquals(200, call(HttpMethod.PUT, "/admin/platform", Map.of("maintenance", false, "registrationOpen", false), admin.token()).getStatusCode().value());
+      assertEquals(200, call(HttpMethod.GET, "/bootstrap", null, regular.token()).getStatusCode().value());
+      assertEquals(200, login(regular));
+      var closed = sealed("/auth/register", Map.of("username", n, "email", n + "@gmail.com", "password", "TestPassword123!", "aiConsent", true));
+      assertEquals(403, closed.getStatusCode().value());
+      assertEquals("REGISTRATION_CLOSED", closed.getBody().get("code"));
+    } finally {
+      assertEquals(200, call(HttpMethod.PUT, "/admin/platform", Map.of("maintenance", false, "registrationOpen", true), admin.token()).getStatusCode().value());
+    }
+    assertEquals(true, call(HttpMethod.GET, "/platform/status", null, null).getBody().get("registrationOpen"));
+    var actions = list("/admin/actions", admin.token());
+    assertTrue(actions.stream().anyMatch(a -> "ADMIN_MAINTENANCE_ON".equals(a.get("action"))));
+    assertTrue(actions.stream().anyMatch(a -> "ADMIN_REGISTRATION_CLOSE".equals(a.get("action"))));
+  }
+
   @Test
   void administratorsPublishAndRemoveTheGlobalAnnouncement() {
     User regular = user(), admin = user();

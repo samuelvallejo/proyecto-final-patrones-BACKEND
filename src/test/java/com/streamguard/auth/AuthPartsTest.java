@@ -16,7 +16,7 @@ class AuthPartsTest {
     var sessions=org.mockito.Mockito.mock(SessionRepository.class);
     var generator=new TokenGenerator(SECRET); var user=UUID.randomUUID(); String token=generator.generate(user);
     org.mockito.Mockito.when(sessions.findActiveUser(TokenHasher.hash(token))).thenReturn(Optional.of(user));
-    var auth=new AuthService(org.mockito.Mockito.mock(UserRepository.class),sessions,new PasswordHasher(),generator,org.mockito.Mockito.mock(RoleService.class));
+    var auth=new AuthService(org.mockito.Mockito.mock(UserRepository.class),sessions,new PasswordHasher(),generator,org.mockito.Mockito.mock(RoleService.class),org.mockito.Mockito.mock(com.streamguard.core.PlatformSettings.class));
     String first=auth.issueSocketTicket(user,token); assertEquals(user,auth.resolveSocket(first)); assertNull(auth.resolveSocket(first));
     String second=auth.issueSocketTicket(user,token);
     org.mockito.Mockito.when(sessions.findActiveUser(TokenHasher.hash(token))).thenReturn(Optional.empty()); assertNull(auth.resolveSocket(second));

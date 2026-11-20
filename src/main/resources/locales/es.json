@@ -128,5 +128,7 @@
   "adminStreamNotLive": "Ese directo ya terminó.",
   "adminCategoryInvalid": "Escribe un nombre de categoría con letras o números.",
   "adminCategoryExists": "Ya existe una categoría con ese nombre.",
-  "announcementTitle": "Anuncio de StreamGuard"
+  "announcementTitle": "Anuncio de StreamGuard",
+  "maintenanceActive": "StreamGuard está en mantenimiento. Vuelve a intentarlo más tarde.",
+  "registrationClosed": "El registro de cuentas nuevas está cerrado por ahora."
 }

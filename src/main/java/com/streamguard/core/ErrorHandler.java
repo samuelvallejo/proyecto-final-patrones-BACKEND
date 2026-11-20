@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 public class ErrorHandler {
   @ExceptionHandler(ApiError.class)
   ResponseEntity<?> api(ApiError e, jakarta.servlet.http.HttpServletRequest request) {
+    if (e.code != null) return ResponseEntity.status(e.status).body(Map.of("error", e.getMessage(), "code", e.code));
     return ResponseEntity.status(e.status).body(Map.of("error", request.getRequestURI().startsWith("/api/auth/") ? Messages.text("authFailed") : e.getMessage()));
   }
 

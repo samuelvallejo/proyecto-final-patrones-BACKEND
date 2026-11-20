@@ -26,6 +26,8 @@ public class AdminController {
 
   public record CategoryName(@NotBlank @Size(max = 64) String name) {}
 
+  public record Platform(boolean maintenance, boolean registrationOpen) {}
+
   public record Announcement(
       @NotBlank @Size(max = 280) String message,
       @NotNull @Pattern(regexp = "INFO|IMPORTANT") String level,
@@ -79,6 +81,11 @@ public class AdminController {
       @PathVariable UUID category, @Valid @RequestBody CategoryName body) {
     admin.renameCategory(roles.requireAdmin(), category, body.name());
     return Map.of("ok", true);
+  }
+
+  @PutMapping("/platform")
+  public Map<String, Object> platform(@RequestBody Platform body) {
+    return admin.setPlatform(roles.requireAdmin(), body.maintenance(), body.registrationOpen());
   }
 
   @PostMapping("/announcement")

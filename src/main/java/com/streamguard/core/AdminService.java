@@ -189,6 +189,20 @@ public class AdminService {
     audit(admin, "CATEGORY", category, "ADMIN_CATEGORY_RENAME", clean);
   }
 
+  /** Maintenance mode (only administrators get in) and whether new accounts can register. */
+  @Transactional
+  public Map<String, Object> setPlatform(UUID admin, boolean maintenance, boolean registrationOpen) {
+    boolean wasMaintenance = settings.maintenance(), wasOpen = settings.registrationOpen();
+    settings.set(
+        Map.of("maintenance", String.valueOf(maintenance), "registration_open", String.valueOf(registrationOpen)),
+        admin);
+    if (wasMaintenance != maintenance)
+      audit(admin, "PLATFORM", null, maintenance ? "ADMIN_MAINTENANCE_ON" : "ADMIN_MAINTENANCE_OFF", "");
+    if (wasOpen != registrationOpen)
+      audit(admin, "PLATFORM", null, registrationOpen ? "ADMIN_REGISTRATION_OPEN" : "ADMIN_REGISTRATION_CLOSE", "");
+    return settings.status();
+  }
+
   /** Publishes the global announcement: a banner for everyone and, optionally, a notification per active account. */
   @Transactional
   public Map<String, Object> announce(UUID admin, String message, String level, boolean notify) {

@@ -32,7 +32,7 @@ class GeminiAdapterTest {
     var adapter = new GeminiAdapter(json, "private-key", "unavailable-model", "other-model", client);
     var result = adapter.generateChat("Reply in Spanish", input(), 4096);
     assertEquals("gemini-2.5-flash-lite", result.model());
-    assertEquals("Una idea: juega con los retos que proponga tu comunidad.",
+    assertEquals("One idea: play the challenges your community suggests.",
         result.content().path("answer").asText());
     assertEquals("gemini-2.5-flash-lite", adapter.chatModel());
     ArgumentCaptor<HttpRequest> requests = ArgumentCaptor.forClass(HttpRequest.class);
@@ -77,7 +77,7 @@ class GeminiAdapterTest {
 
   private HttpResponse<String> answer() throws Exception {
     return response(200, json.writeValueAsString(Map.of("candidates", List.of(
-        Map.of("content", Map.of("parts", List.of(Map.of("text", "Una idea: juega con los retos que proponga tu comunidad."))))))));
+        Map.of("content", Map.of("parts", List.of(Map.of("text", "One idea: play the challenges your community suggests."))))))));
   }
 
   @SuppressWarnings("unchecked")

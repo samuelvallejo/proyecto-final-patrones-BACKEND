@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test;
 class AdminRulesTest {
   @Test
   void categorySlugsDropAccentsAndSymbols() {
-    assertEquals("ciencia-tecnologia", AdminService.slug("  Ciencia & Tecnología "));
-    assertEquals("musica-en-vivo", AdminService.slug("Música   en vivo!"));
-    assertEquals("", AdminService.slug("¡¿?!"));
+    assertEquals("cafe-resume", AdminService.slug("  Café & Résumé "));
+    assertEquals("naive-live-music", AdminService.slug("Naïve   live music!"));
+    assertEquals("", AdminService.slug("?!*"));
     assertTrue(AdminService.slug("a".repeat(80)).length() <= 64);
   }
 

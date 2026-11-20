@@ -301,10 +301,10 @@ class PlatformIntegrationTest {
   @Test
   void upcomingEventsAndDiscoveryListsRespectOwnership() {
     User owner = user(), other = user(), stranger = user();
-    assertEquals(409, call(HttpMethod.POST, "/events", Map.of("title", "Sin canal", "startsAt", java.time.OffsetDateTime.now().plusDays(1).toString()), stranger.token()).getStatusCode().value());
+    assertEquals(409, call(HttpMethod.POST, "/events", Map.of("title", "No channel", "startsAt", java.time.OffsetDateTime.now().plusDays(1).toString()), stranger.token()).getStatusCode().value());
     String channel = channel(owner);
     assertEquals(400, call(HttpMethod.POST, "/events", Map.of("title", "Pasado", "startsAt", java.time.OffsetDateTime.now().minusDays(1).toString()), owner.token()).getStatusCode().value());
-    var created = call(HttpMethod.POST, "/events", Map.of("title", "Torneo de prueba", "startsAt", java.time.OffsetDateTime.now().plusHours(3).toString()), owner.token());
+    var created = call(HttpMethod.POST, "/events", Map.of("title", "Test tournament", "startsAt", java.time.OffsetDateTime.now().plusHours(3).toString()), owner.token());
     assertEquals(200, created.getStatusCode().value());
     String event = created.getBody().get("id").toString();
     List<Map> upcoming = http.exchange("/api/events/upcoming", HttpMethod.GET, new HttpEntity<>(cookies(other)), List.class).getBody();
@@ -378,12 +378,12 @@ class PlatformIntegrationTest {
     assertEquals(200, call(HttpMethod.PUT, "/admin/users/" + streamer.id() + "/status", Map.of("status", "ACTIVE"), admin.token()).getStatusCode().value());
 
     // Categories get a generated slug and duplicates are refused.
-    String name = "Ciencia " + UUID.randomUUID().toString().substring(0, 6);
+    String name = "Science " + UUID.randomUUID().toString().substring(0, 6);
     var created = call(HttpMethod.POST, "/admin/categories", Map.of("name", name), admin.token());
     assertEquals(200, created.getStatusCode().value());
-    assertTrue(created.getBody().get("slug").toString().startsWith("ciencia-"));
+    assertTrue(created.getBody().get("slug").toString().startsWith("science-"));
     assertEquals(409, call(HttpMethod.POST, "/admin/categories", Map.of("name", name), admin.token()).getStatusCode().value());
-    assertEquals(200, call(HttpMethod.PUT, "/admin/categories/" + created.getBody().get("id"), Map.of("name", name + " y tecnología"), admin.token()).getStatusCode().value());
+    assertEquals(200, call(HttpMethod.PUT, "/admin/categories/" + created.getBody().get("id"), Map.of("name", name + " and technology"), admin.token()).getStatusCode().value());
 
     var actions = list("/admin/actions", admin.token());
     assertTrue(actions.stream().anyMatch(a -> "ADMIN_END_STREAM".equals(a.get("action"))));
@@ -434,7 +434,7 @@ class PlatformIntegrationTest {
   void administratorsPublishAndRemoveTheGlobalAnnouncement() {
     User regular = user(), admin = user();
     db.exec("INSERT INTO user_roles(user_id,role_id) SELECT ?::uuid,id FROM roles WHERE name='ADMIN'", admin.id());
-    Map<String, Object> body = Map.of("message", "Torneo el sábado a las 4 p. m.", "level", "IMPORTANT", "sendNotification", true);
+    Map<String, Object> body = Map.of("message", "Tournament on Saturday at 4 p.m.", "level", "IMPORTANT", "sendNotification", true);
     assertEquals(403, call(HttpMethod.POST, "/admin/announcement", body, regular.token()).getStatusCode().value());
     assertEquals(400, call(HttpMethod.POST, "/admin/announcement", Map.of("message", "x", "level", "LOUD", "sendNotification", false), admin.token()).getStatusCode().value());
     var published = call(HttpMethod.POST, "/admin/announcement", body, admin.token());
@@ -442,10 +442,10 @@ class PlatformIntegrationTest {
     assertTrue(((Number) published.getBody().get("notified")).intValue() >= 2);
     try {
       Map status = call(HttpMethod.GET, "/platform/status", null, null).getBody();
-      assertEquals("Torneo el sábado a las 4 p. m.", ((Map) status.get("announcement")).get("message"));
+      assertEquals("Tournament on Saturday at 4 p.m.", ((Map) status.get("announcement")).get("message"));
       Map boot = call(HttpMethod.GET, "/bootstrap", null, regular.token()).getBody();
       assertEquals("IMPORTANT", ((Map) ((Map) boot.get("platform")).get("announcement")).get("level"));
-      assertTrue(list("/notifications", regular.token()).stream().anyMatch(n -> "Torneo el sábado a las 4 p. m.".equals(n.get("body"))));
+      assertTrue(list("/notifications", regular.token()).stream().anyMatch(n -> "Tournament on Saturday at 4 p.m.".equals(n.get("body"))));
       assertEquals(403, call(HttpMethod.DELETE, "/admin/announcement", null, regular.token()).getStatusCode().value());
     } finally {
       assertEquals(200, call(HttpMethod.DELETE, "/admin/announcement", null, admin.token()).getStatusCode().value());

@@ -18,6 +18,7 @@ public class AiService {
   private final String provider;
   private final ObjectMapper json;
   private final Semaphore slots = new Semaphore(1);
+  private final AiGatewayProxy gateway;
 
   public record Analysis(UUID requestId, Verdict verdict) {}
 
@@ -29,6 +30,17 @@ public class AiService {
       OllamaAdapter ollama,
       ObjectMapper json,
       @org.springframework.beans.factory.annotation.Value("${app.ai-provider}") String provider) {
+    this(db, gemini, ollama, json, provider, AiGatewayProxy.AccessRules.OPEN);
+  }
+
+  @org.springframework.beans.factory.annotation.Autowired
+  public AiService(
+      Db db,
+      GeminiAdapter gemini,
+      OllamaAdapter ollama,
+      ObjectMapper json,
+      @org.springframework.beans.factory.annotation.Value("${app.ai-provider}") String provider,
+      AiGatewayProxy.AccessRules rules) {
     this.db = db;
     this.gemini = gemini;
     this.ollama = ollama;
@@ -36,6 +48,12 @@ public class AiService {
     if (!Set.of("GEMINI", "OLLAMA", "LOCAL_RULES").contains(this.provider))
       throw new IllegalArgumentException("Unsupported AI provider");
     this.json = json;
+    this.gateway = PatternAssembly.aiGateway(this.provider, gemini, ollama, rules);
+  }
+
+  /** Counters of the AI gateway proxy, for the administration panel. */
+  public AiGatewayProxy.Stats gatewayStats() {
+    return gateway.stats();
   }
 
   public boolean configured() {
@@ -55,7 +73,8 @@ public class AiService {
   }
 
   private AiToolkitFactory toolkit() {
-    return PatternAssembly.toolkit(provider, gemini, ollama, json);
+    // Both provider slots receive the proxy, so no AI call can skip its rules.
+    return PatternAssembly.toolkit(provider, gateway, gateway, json);
   }
 
   private UUID request(UUID stream, String task, Object input) {

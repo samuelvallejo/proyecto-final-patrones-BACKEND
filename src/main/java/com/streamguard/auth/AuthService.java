@@ -24,12 +24,15 @@ public class AuthService {
   private final SessionRepository sessions;
   private final PasswordHasher passwords;
   private final TokenGenerator tokens;
+  private final RoleService roles;
 
   public AuthService(
       UserRepository users,
       SessionRepository sessions,
       PasswordHasher passwords,
-      TokenGenerator tokens) {
+      TokenGenerator tokens,
+      RoleService roles) {
+    this.roles = roles;
     this.users = users;
     this.sessions = sessions;
     this.passwords = passwords;
@@ -85,8 +88,11 @@ public class AuthService {
     return openSession(Db.id(user.get().get("id")));
   }
 
+  /** The profile plus its role: ADMIN for administrators, USER for everyone else. */
   public Map<String, Object> profile(UUID user) {
-    return users.profile(user);
+    Map<String, Object> profile = new java.util.LinkedHashMap<>(users.profile(user));
+    profile.put("role", roles.roleOf(user));
+    return profile;
   }
 
   public void logout(String bearer) {
@@ -98,6 +104,6 @@ public class AuthService {
   private Map<String, Object> openSession(UUID user) {
     String token = tokens.generate(user);
     sessions.create(user, TokenHasher.hash(token));
-    return Map.of("token", token, "user", users.profile(user));
+    return Map.of("token", token, "user", profile(user));
   }
 }

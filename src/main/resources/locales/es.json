@@ -117,5 +117,15 @@
   "eventInvalidTime": "Elige una fecha futura dentro del próximo año.",
   "eventLimit": "Tu canal ya tiene el máximo de eventos programados.",
   "eventInvalidCategory": "La categoría elegida no existe.",
-  "eventNotFound": "No encontramos ese evento en tu canal."
+  "eventNotFound": "No encontramos ese evento en tu canal.",
+  "adminOnly": "Esta sección es solo para administradores.",
+  "adminUserMissing": "No encontramos esa cuenta.",
+  "adminSelfDemote": "No puedes quitarte el rol de administrador a ti mismo.",
+  "adminSelfSuspend": "No puedes suspender tu propia cuenta.",
+  "adminSuspendAdmin": "Primero quita el rol de administrador para poder suspender esta cuenta.",
+  "adminPromoteSuspended": "Reactiva la cuenta antes de hacerla administradora.",
+  "adminConfigured": "Esta cuenta es administradora por configuración del servidor (ADMIN_USERNAMES) y no se puede cambiar desde aquí.",
+  "adminStreamNotLive": "Ese directo ya terminó.",
+  "adminCategoryInvalid": "Escribe un nombre de categoría con letras o números.",
+  "adminCategoryExists": "Ya existe una categoría con ese nombre."
 }

@@ -95,6 +95,11 @@ public class PlatformService {
   public void end(UUID stream, UUID user) {
     var row = stream(stream);
     owner(Db.id(row.get("channel_id")), user);
+    finish(stream);
+  }
+
+  /** Ends a broadcast without the ownership check. Only the owner path above and administrators call it. */
+  public void finish(UUID stream) {
     db.exec(
         "UPDATE streams SET status='ENDED',ended_at=now() WHERE id=? AND status='LIVE'", stream);
     db.exec(

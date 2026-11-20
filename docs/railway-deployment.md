@@ -27,6 +27,7 @@ Set these variables on the backend service. The `${{Postgres.*}}` values are Rai
 | `MEDIA_DIR` / `MEDIA_WORK_DIR` | `/tmp/streamguard/media` and `/tmp/streamguard/work` |
 | `MAX_VIEWERS` | `6` |
 | `AI_PROVIDER` | `local-rules`, or `gemini` with `GEMINI_API_KEY` |
+| `ADMIN_USERNAMES` | Usernames that are always administrators, comma separated (for example `samuel`). Other accounts are promoted from the administration panel |
 
 Generate the two keys outside Git, for example in PowerShell:
 

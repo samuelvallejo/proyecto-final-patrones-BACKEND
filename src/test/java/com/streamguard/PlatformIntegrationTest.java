@@ -334,6 +334,62 @@ class PlatformIntegrationTest {
     assertTrue(body.get("following") instanceof List);
   }
 
+  private List<Map> list(String path, String token) {
+    HttpHeaders h = new HttpHeaders();
+    h.set("Cookie", token);
+    var r = http.exchange("/api" + path, HttpMethod.GET, new HttpEntity<>(h), List.class);
+    assertEquals(200, r.getStatusCode().value());
+    return r.getBody();
+  }
+
+  @Test
+  void onlyAdministratorsReachTheAdministrationPanel() {
+    User regular = user(), admin = user(), streamer = user();
+    assertEquals("USER", call(HttpMethod.GET, "/users/me", null, regular.token()).getBody().get("role"));
+    assertEquals(403, call(HttpMethod.GET, "/admin/overview", null, regular.token()).getStatusCode().value());
+    assertEquals(403, call(HttpMethod.PUT, "/admin/users/" + regular.id() + "/role", Map.of("admin", true), regular.token()).getStatusCode().value());
+    assertEquals(401, call(HttpMethod.GET, "/admin/overview", null, null).getStatusCode().value());
+
+    db.exec("INSERT INTO user_roles(user_id,role_id) SELECT ?::uuid,id FROM roles WHERE name='ADMIN'", admin.id());
+    assertEquals("ADMIN", ((Map) call(HttpMethod.GET, "/bootstrap", null, admin.token()).getBody().get("user")).get("role"));
+    Map overview = call(HttpMethod.GET, "/admin/overview", null, admin.token()).getBody();
+    assertTrue(((Number) ((Map) overview.get("totals")).get("admins")).intValue() >= 1);
+    assertTrue(((Map) overview.get("system")).containsKey("aiProvider"));
+
+    // Promote and demote another account; an administrator cannot demote or suspend itself.
+    assertEquals(200, call(HttpMethod.PUT, "/admin/users/" + regular.id() + "/role", Map.of("admin", true), admin.token()).getStatusCode().value());
+    assertEquals("ADMIN", call(HttpMethod.GET, "/users/me", null, regular.token()).getBody().get("role"));
+    assertEquals(400, call(HttpMethod.PUT, "/admin/users/" + regular.id() + "/status", Map.of("status", "SUSPENDED"), admin.token()).getStatusCode().value());
+    assertEquals(200, call(HttpMethod.PUT, "/admin/users/" + regular.id() + "/role", Map.of("admin", false), admin.token()).getStatusCode().value());
+    assertEquals(400, call(HttpMethod.PUT, "/admin/users/" + admin.id() + "/role", Map.of("admin", false), admin.token()).getStatusCode().value());
+    assertEquals(400, call(HttpMethod.PUT, "/admin/users/" + admin.id() + "/status", Map.of("status", "SUSPENDED"), admin.token()).getStatusCode().value());
+    assertEquals(400, call(HttpMethod.PUT, "/admin/users/" + regular.id() + "/status", Map.of("status", "DELETED"), admin.token()).getStatusCode().value());
+    assertTrue(list("/admin/users?search=" + regular.username(), admin.token()).stream().anyMatch(u -> regular.username().equals(u.get("username"))));
+
+    // Any live broadcast can be ended, and suspending an account closes its sessions.
+    channel(streamer);
+    String live = stream(streamer);
+    assertTrue(list("/admin/streams", admin.token()).stream().anyMatch(s -> live.equals(s.get("id"))));
+    assertEquals(200, call(HttpMethod.POST, "/admin/streams/" + live + "/end", Map.of(), admin.token()).getStatusCode().value());
+    assertEquals("ENDED", call(HttpMethod.GET, "/streams/" + live, null, streamer.token()).getBody().get("status"));
+    assertEquals(404, call(HttpMethod.POST, "/admin/streams/" + live + "/end", Map.of(), admin.token()).getStatusCode().value());
+    assertEquals(200, call(HttpMethod.PUT, "/admin/users/" + streamer.id() + "/status", Map.of("status", "SUSPENDED"), admin.token()).getStatusCode().value());
+    assertEquals(401, call(HttpMethod.GET, "/users/me", null, streamer.token()).getStatusCode().value());
+    assertEquals(200, call(HttpMethod.PUT, "/admin/users/" + streamer.id() + "/status", Map.of("status", "ACTIVE"), admin.token()).getStatusCode().value());
+
+    // Categories get a generated slug and duplicates are refused.
+    String name = "Ciencia " + UUID.randomUUID().toString().substring(0, 6);
+    var created = call(HttpMethod.POST, "/admin/categories", Map.of("name", name), admin.token());
+    assertEquals(200, created.getStatusCode().value());
+    assertTrue(created.getBody().get("slug").toString().startsWith("ciencia-"));
+    assertEquals(409, call(HttpMethod.POST, "/admin/categories", Map.of("name", name), admin.token()).getStatusCode().value());
+    assertEquals(200, call(HttpMethod.PUT, "/admin/categories/" + created.getBody().get("id"), Map.of("name", name + " y tecnología"), admin.token()).getStatusCode().value());
+
+    var actions = list("/admin/actions", admin.token());
+    assertTrue(actions.stream().anyMatch(a -> "ADMIN_END_STREAM".equals(a.get("action"))));
+    assertTrue(actions.stream().anyMatch(a -> "ADMIN_SUSPEND".equals(a.get("action"))));
+  }
+
   private HttpHeaders cookies(User u) {
     HttpHeaders h = new HttpHeaders(); h.set("Cookie", u.token()); return h;
   }

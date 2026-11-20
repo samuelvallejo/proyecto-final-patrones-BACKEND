@@ -38,6 +38,8 @@ management:
       show-details: never
 app:
   data-encryption-key: ${DATA_ENCRYPTION_KEY:}
+  # Usernames (comma separated) that are always administrators. Others are promoted from the panel.
+  admin-usernames: ${ADMIN_USERNAMES:}
   archive-budget-bytes: ${ARCHIVE_BUDGET_BYTES:209715200}
   origins: ${FRONTEND_ORIGIN:http://localhost:5173}
   jwt-secret: ${JWT_SECRET:}

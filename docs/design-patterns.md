@@ -4,6 +4,11 @@ The Java backend implements nine design patterns. The original Builder, Factory 
 Abstract Factory, Adapter and Bridge remain in use. Singleton, Prototype, Decorator and
 Facade extend those workflows without changing the PostgreSQL schema.
 
+All nine are written by hand in plain Java: the classes in `patterns/` import nothing from Spring
+and are created with `new` in `PatternAssembly`, a hand-written assembly class. Spring only creates
+the application services (controllers, repositories and services) that use them.
+`PatternAssemblyTest` fails if a Spring import or annotation appears in that package.
+
 | Pattern | Production implementation | Responsibility |
 | --- | --- | --- |
 | Builder | `ModerationPolicy.Builder` | Build validated, immutable channel rules. |

@@ -24,14 +24,13 @@ public class ClipService {
       PlatformService platform,
       AiService ai,
       MediaService media,
-      LiveHub hub,
-      NotificationBridge.RealtimeDelivery delivery) {
+      LiveHub hub) {
     this.db = db;
     this.platform = platform;
     this.ai = ai;
     this.media = media;
     this.hub = hub;
-    this.delivery = delivery;
+    this.delivery = com.streamguard.patterns.PatternAssembly.realtimeDelivery(db, hub);
   }
 
   @Transactional

@@ -25,13 +25,12 @@ public class ChatService {
       PlatformService platform,
       AiService ai,
       LiveHub hub,
-      NotificationBridge.RealtimeDelivery delivery,
       PlatformTransactionManager tm) {
     this.db = db;
     this.platform = platform;
     this.ai = ai;
     this.hub = hub;
-    this.delivery = delivery;
+    this.delivery = com.streamguard.patterns.PatternAssembly.realtimeDelivery(db, hub);
     this.tx = new TransactionTemplate(tm);
   }
 

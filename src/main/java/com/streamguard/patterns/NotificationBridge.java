@@ -4,7 +4,6 @@ import com.streamguard.core.Db;
 import com.streamguard.i18n.Messages;
 import com.streamguard.live.LiveHub;
 import java.util.*;
-import org.springframework.stereotype.Component;
 
 /** Bridge: notice types evolve separately from delivery implementations. */
 public final class NotificationBridge {
@@ -60,7 +59,6 @@ public final class NotificationBridge {
     }
   }
 
-  @Component
   public static class RealtimeDelivery extends DatabaseDelivery {
     private final LiveHub hub;
 

@@ -44,15 +44,14 @@ public class PlatformController {
       ClipService clips,
       MediaService media,
       Db db,
-      AiService ai,
-      CreatorStudioFacade studio) {
+      AiService ai) {
     this.platform = platform;
     this.chat = chat;
     this.clips = clips;
     this.media = media;
     this.db = db;
     this.ai = ai;
-    this.studio = studio;
+    this.studio = com.streamguard.patterns.PatternAssembly.creatorStudio(platform, ai);
   }
 
   public record Channel(

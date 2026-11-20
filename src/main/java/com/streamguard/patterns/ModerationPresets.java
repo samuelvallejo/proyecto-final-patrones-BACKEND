@@ -2,11 +2,19 @@ package com.streamguard.patterns;
 
 import java.util.List;
 import java.util.Map;
-import org.springframework.stereotype.Component;
 
-/** Prototype registry: templates are immutable; callers always receive independent policies. */
-@Component
+/**
+ * Prototype registry: templates are immutable; callers always receive independent policies.
+ * Plain Java: the application shares one registry through {@link #shared()}.
+ */
 public class ModerationPresets {
+  private static final ModerationPresets SHARED = new ModerationPresets();
+
+  /** The registry the application uses; tests may still create their own. */
+  public static ModerationPresets shared() {
+    return SHARED;
+  }
+
   private final Map<String, ModerationPolicy> prototypes =
       Map.of(
           "RELAXED", new ModerationPolicy.Builder().level("RELAXED").thresholds(.7, .95).build(),

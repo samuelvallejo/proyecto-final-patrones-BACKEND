@@ -5,10 +5,11 @@ import com.streamguard.core.PlatformService;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
 
-/** Facade: one authorized entry point coordinates channel data, policy templates and AI status. */
-@Service
+/**
+ * Facade: one authorized entry point coordinates channel data, policy templates and AI status.
+ * Plain Java: {@link PatternAssembly} creates it with {@code new}.
+ */
 public class CreatorStudioFacade {
   private final PlatformService platform;
   private final AiService ai;

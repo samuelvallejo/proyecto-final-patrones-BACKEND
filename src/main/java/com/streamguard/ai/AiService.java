@@ -55,11 +55,7 @@ public class AiService {
   }
 
   private AiToolkitFactory toolkit() {
-    return switch (provider) {
-      case "OLLAMA" -> new AiToolkitFactory.OllamaToolkit(ollama, json);
-      case "GEMINI" -> new AiToolkitFactory.GeminiToolkit(gemini, json);
-      default -> new AiToolkitFactory.LocalToolkit(json);
-    };
+    return PatternAssembly.toolkit(provider, gemini, ollama, json);
   }
 
   private UUID request(UUID stream, String task, Object input) {
@@ -93,10 +89,8 @@ public class AiService {
     UUID id = request(stream, "MODERATION", Map.of("message", text, "level", policy.level()));
     long start = System.currentTimeMillis();
     var local = new AiToolkitFactory.LocalToolkit(json).moderation();
-    var limited = new ConcurrencyLimitedModerationDecorator(toolkit().moderation(), slots);
-    var resilient = new FallbackModerationDecorator(limited, local,
+    var analyzer = PatternAssembly.moderationChain(toolkit().moderation(), local, slots,
         failure -> log.warn("Moderation provider {} failed; local rules applied", provider));
-    var analyzer = new LocalRulesModerationDecorator(resilient, local);
     Verdict result = analyzer.analyze(text, policy);
     response(id, result, start, result.provider().equals("LOCAL_RULES") ? "LOCAL" : "SUCCEEDED");
     return new Analysis(id, result);

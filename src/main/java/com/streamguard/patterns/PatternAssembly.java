@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 /**
  * Hand-written assembly of the design patterns. Spring only creates the application services
  * (controllers, repositories, services); every pattern object is built here with {@code new}, so
- * none of the nine patterns depends on the framework or on its dependency injection.
+ * none of the ten patterns depends on the framework or on its dependency injection.
  */
 public final class PatternAssembly {
   private PatternAssembly() {}
@@ -40,6 +40,28 @@ public final class PatternAssembly {
       case "GEMINI" -> new AiToolkitFactory.GeminiToolkit(gemini, json);
       default -> new AiToolkitFactory.LocalToolkit(json);
     };
+  }
+
+  /**
+   * Proxy (protection): one proxy, created once per service, in front of the configured provider's
+   * Adapter. It keeps the hourly window, so it must outlive each request.
+   */
+  public static AiGatewayProxy aiGateway(
+      String provider, AiGateway gemini, AiGateway ollama, AiGatewayProxy.AccessRules rules) {
+    return new AiGatewayProxy(provider.equalsIgnoreCase("OLLAMA") ? ollama : gemini, rules);
+  }
+
+  /**
+   * Proxy (dynamic protection + audit): the content moderation service is only reachable through
+   * this proxy, which checks the administrator role and writes the audit record.
+   */
+  public static com.streamguard.core.ContentModeration contentModeration(
+      com.streamguard.core.ContentModeration real,
+      java.util.function.Predicate<java.util.UUID> isAdmin,
+      Db db,
+      java.util.function.Function<java.util.function.Supplier<Object>, Object> inTransaction) {
+    return AdminAuditProxy.protect(
+        com.streamguard.core.ContentModeration.class, real, isAdmin, db, inTransaction);
   }
 
   /**

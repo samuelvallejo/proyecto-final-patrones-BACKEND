@@ -127,5 +127,6 @@
   "adminConfigured": "Esta cuenta es administradora por configuración del servidor (ADMIN_USERNAMES) y no se puede cambiar desde aquí.",
   "adminStreamNotLive": "Ese directo ya terminó.",
   "adminCategoryInvalid": "Escribe un nombre de categoría con letras o números.",
-  "adminCategoryExists": "Ya existe una categoría con ese nombre."
+  "adminCategoryExists": "Ya existe una categoría con ese nombre.",
+  "announcementTitle": "Anuncio de StreamGuard"
 }

@@ -25,6 +25,7 @@ public class AdminService {
   private final PlatformService platform;
   private final LiveHub hub;
   private final ObjectProvider<Flyway> flyway;
+  private final PlatformSettings settings;
 
   public AdminService(
       Db db,
@@ -32,7 +33,9 @@ public class AdminService {
       AiService ai,
       PlatformService platform,
       LiveHub hub,
-      ObjectProvider<Flyway> flyway) {
+      ObjectProvider<Flyway> flyway,
+      PlatformSettings settings) {
+    this.settings = settings;
     this.db = db;
     this.roles = roles;
     this.ai = ai;
@@ -53,7 +56,7 @@ public class AdminService {
                 + " count(*) FROM moderation_queue WHERE status='PENDING') AS pending_reviews,"
                 + "(SELECT count(*) FROM clips) AS clips,(SELECT count(*) FROM scheduled_events"
                 + " WHERE starts_at>now()) AS upcoming_events");
-    return Map.of("totals", totals, "system", system());
+    return Map.of("totals", totals, "system", system(), "platform", settings.status());
   }
 
   private Map<String, Object> system() {
@@ -184,6 +187,39 @@ public class AdminService {
       throw new ApiError(409, Messages.text("adminCategoryExists"));
     }
     audit(admin, "CATEGORY", category, "ADMIN_CATEGORY_RENAME", clean);
+  }
+
+  /** Publishes the global announcement: a banner for everyone and, optionally, a notification per active account. */
+  @Transactional
+  public Map<String, Object> announce(UUID admin, String message, String level, boolean notify) {
+    String clean = message.strip();
+    Map<String, String> changes = new HashMap<>();
+    changes.put("announcement_id", UUID.randomUUID().toString());
+    changes.put("announcement_message", clean);
+    changes.put("announcement_level", level);
+    changes.put("announcement_at", java.time.Instant.now().toString());
+    settings.set(changes, admin);
+    int notified =
+        notify
+            ? db.exec(
+                "INSERT INTO notifications(user_id,type,title,body) SELECT id,'ANNOUNCEMENT',?,? FROM"
+                    + " users WHERE status='ACTIVE'",
+                Messages.text("announcementTitle"),
+                clean)
+            : 0;
+    audit(admin, "PLATFORM", null, "ADMIN_ANNOUNCE", clean);
+    return Map.of("notified", notified, "platform", settings.status());
+  }
+
+  @Transactional
+  public void clearAnnouncement(UUID admin) {
+    var current = settings.announcement();
+    if (current == null) return;
+    Map<String, String> changes = new HashMap<>();
+    for (String name : List.of("announcement_id", "announcement_message", "announcement_level", "announcement_at"))
+      changes.put(name, null);
+    settings.set(changes, admin);
+    audit(admin, "PLATFORM", null, "ADMIN_ANNOUNCE_REMOVE", current.get("message").toString());
   }
 
   public List<Map<String, Object>> actions() {

@@ -26,6 +26,11 @@ public class AdminController {
 
   public record CategoryName(@NotBlank @Size(max = 64) String name) {}
 
+  public record Announcement(
+      @NotBlank @Size(max = 280) String message,
+      @NotNull @Pattern(regexp = "INFO|IMPORTANT") String level,
+      boolean sendNotification) {}
+
   @GetMapping("/overview")
   public Map<String, Object> overview() {
     roles.requireAdmin();
@@ -73,6 +78,17 @@ public class AdminController {
   public Map<String, Object> renameCategory(
       @PathVariable UUID category, @Valid @RequestBody CategoryName body) {
     admin.renameCategory(roles.requireAdmin(), category, body.name());
+    return Map.of("ok", true);
+  }
+
+  @PostMapping("/announcement")
+  public Map<String, Object> announce(@Valid @RequestBody Announcement body) {
+    return admin.announce(roles.requireAdmin(), body.message(), body.level(), body.sendNotification());
+  }
+
+  @DeleteMapping("/announcement")
+  public Map<String, Object> clearAnnouncement() {
+    admin.clearAnnouncement(roles.requireAdmin());
     return Map.of("ok", true);
   }
 

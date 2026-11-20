@@ -186,9 +186,9 @@ class PlatformIntegrationTest {
   }
 
   @Test
-  void schemaHas69DomainTablesAndForeignKeys() {
+  void schemaHas70DomainTablesAndForeignKeys() {
     assertEquals(
-        69,
+        70,
         db.count(
             "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND"
                 + " table_type='BASE TABLE' AND table_name<>'flyway_schema_history'"));
@@ -388,6 +388,30 @@ class PlatformIntegrationTest {
     var actions = list("/admin/actions", admin.token());
     assertTrue(actions.stream().anyMatch(a -> "ADMIN_END_STREAM".equals(a.get("action"))));
     assertTrue(actions.stream().anyMatch(a -> "ADMIN_SUSPEND".equals(a.get("action"))));
+  }
+
+  @Test
+  void administratorsPublishAndRemoveTheGlobalAnnouncement() {
+    User regular = user(), admin = user();
+    db.exec("INSERT INTO user_roles(user_id,role_id) SELECT ?::uuid,id FROM roles WHERE name='ADMIN'", admin.id());
+    Map<String, Object> body = Map.of("message", "Torneo el sábado a las 4 p. m.", "level", "IMPORTANT", "sendNotification", true);
+    assertEquals(403, call(HttpMethod.POST, "/admin/announcement", body, regular.token()).getStatusCode().value());
+    assertEquals(400, call(HttpMethod.POST, "/admin/announcement", Map.of("message", "x", "level", "LOUD", "sendNotification", false), admin.token()).getStatusCode().value());
+    var published = call(HttpMethod.POST, "/admin/announcement", body, admin.token());
+    assertEquals(200, published.getStatusCode().value());
+    assertTrue(((Number) published.getBody().get("notified")).intValue() >= 2);
+    try {
+      Map status = call(HttpMethod.GET, "/platform/status", null, null).getBody();
+      assertEquals("Torneo el sábado a las 4 p. m.", ((Map) status.get("announcement")).get("message"));
+      Map boot = call(HttpMethod.GET, "/bootstrap", null, regular.token()).getBody();
+      assertEquals("IMPORTANT", ((Map) ((Map) boot.get("platform")).get("announcement")).get("level"));
+      assertTrue(list("/notifications", regular.token()).stream().anyMatch(n -> "Torneo el sábado a las 4 p. m.".equals(n.get("body"))));
+      assertEquals(403, call(HttpMethod.DELETE, "/admin/announcement", null, regular.token()).getStatusCode().value());
+    } finally {
+      assertEquals(200, call(HttpMethod.DELETE, "/admin/announcement", null, admin.token()).getStatusCode().value());
+    }
+    assertNull(call(HttpMethod.GET, "/platform/status", null, null).getBody().get("announcement"));
+    assertTrue(list("/admin/actions", admin.token()).stream().anyMatch(a -> "ADMIN_ANNOUNCE_REMOVE".equals(a.get("action"))));
   }
 
   private HttpHeaders cookies(User u) {

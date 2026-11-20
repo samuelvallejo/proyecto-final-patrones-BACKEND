@@ -39,6 +39,7 @@ public class SecurityConfig {
                         "/ws",
                         "/ws/media",
                         "/api/ping",
+                        "/api/platform/status",
                         "/api/auth/challenge",
                         "/api/auth/register",
                         "/api/auth/login")

@@ -14,8 +14,11 @@ public class BootstrapController {
   private final AuthService auth;
   private final PlatformController platform;
   private final DiscoveryController discovery;
+  private final PlatformSettings settings;
 
-  public BootstrapController(AuthService auth, PlatformController platform, DiscoveryController discovery) {
+  public BootstrapController(
+      AuthService auth, PlatformController platform, DiscoveryController discovery, PlatformSettings settings) {
+    this.settings = settings;
     this.auth = auth;
     this.platform = platform;
     this.discovery = discovery;
@@ -27,7 +30,14 @@ public class BootstrapController {
         "user", auth.profile(AuthService.current()),
         "config", platform.config(),
         "categories", platform.categories(),
-        "following", discovery.following());
+        "following", discovery.following(),
+        "platform", settings.status());
+  }
+
+  /** Public: the login screen shows maintenance, closed registration and the announcement. */
+  @GetMapping("/platform/status")
+  public Map<String, Object> platformStatus() {
+    return settings.status();
   }
 
   /** Public and database-free: lets the page wake a sleeping server while the user types. */

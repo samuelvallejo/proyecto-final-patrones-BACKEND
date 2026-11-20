@@ -123,7 +123,7 @@ public class PlatformService {
                 + " channel_name,c.slug,p.display_name,cat.name AS category FROM streams s JOIN"
                 + " channels c ON c.id=s.channel_id JOIN user_profiles p ON p.user_id=c.owner_id"
                 + " LEFT JOIN categories cat ON cat.id=s.category_id WHERE s.status='LIVE' AND"
-                + " (s.title ILIKE ? OR c.name ILIKE ?) AND (?='' OR cat.slug=?) ORDER BY"
+                + " s.removed_at IS NULL AND (s.title ILIKE ? OR c.name ILIKE ?) AND (?='' OR cat.slug=?) ORDER BY"
                 + " s.started_at DESC LIMIT 50",
             "%" + search + "%",
             "%" + search + "%",
